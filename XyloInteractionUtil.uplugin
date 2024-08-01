@@ -1,0 +1,24 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "XyloInteractionUtil",
+	"Description": "a plugin to easily implement interactions with actors",
+	"Category": "Other",
+	"CreatedBy": "Xylo",
+	"CreatedByURL": "",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"CanContainContent": true,
+	"IsBetaVersion": false,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "XyloInteractionUtil",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	]
+}
