@@ -8,7 +8,7 @@ bool IXInUInteractInterface::CanInteract(AActor* InteractableActor, FGameplayTag
 	return false;
 }
 
-bool IXInUInteractInterface::TryInteract(AActor* InteractableActor, FGameplayTag InteractionTag, FGameplayTag& OutStatusTag)
+bool IXInUInteractInterface::TryInteract(AActor* InteractableActor, FGameplayTag InteractionTag)
 {
 	return false;
 }

@@ -28,7 +28,9 @@ public:
 
 	/** Get view location and direction for the locally controlled character */
 	virtual bool GetLocalPlayerView(FVector& LocalPlayerViewLocation, FVector& LocalPlayerViewDirection) = 0;
-	
+
+	/** Checks if the interaction is possible. Called on both client and server */
 	virtual bool CanInteract(AActor* InteractableActor, FGameplayTag InteractionTag, FGameplayTag& OutStatusTag);
-	virtual bool TryInteract(AActor* InteractableActor, FGameplayTag InteractionTag, FGameplayTag& OutStatusTag);
+	/** Tries to perform the interaction. Called on both client and server */
+	virtual bool TryInteract(AActor* InteractableActor, FGameplayTag InteractionTag);
 };

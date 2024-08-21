@@ -29,10 +29,10 @@ void UXInUInteractComponent::BeginPlay()
 void UXInUInteractComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
+	
 	if (GetPawn<APawn>()->IsLocallyControlled())
 	{
-		UpdateSelectedInteractable_Client();
+		UpdateSelectedInteractable_Local();
 	}
 }
 
@@ -52,7 +52,7 @@ IXInUInteractInterface* UXInUInteractComponent::GetInteractInterface()
 	return InteractInterface;
 }
 
-void UXInUInteractComponent::UpdateSelectedInteractable_Client()
+void UXInUInteractComponent::UpdateSelectedInteractable_Local()
 {
 	if (GetInteractInterface())
 	{
@@ -77,15 +77,15 @@ void UXInUInteractComponent::UpdateSelectedInteractable_Client()
 
 			if (NewSelectedActor != SelectedInteractable)
 			{
-				UpdateInteractableStatus_Client(SelectedInteractable);
-				UpdateInteractableStatus_Client(NewSelectedActor);
+				UpdateInteractableStatus_Local(SelectedInteractable);
 				SelectedInteractable = NewSelectedActor;
+				UpdateInteractableStatus_Local(NewSelectedActor, true);
 			}
 		}
 	}
 }
 
-void UXInUInteractComponent::UpdateInteractableStatus_Client(AActor* Interactable)
+void UXInUInteractComponent::UpdateInteractableStatus_Local(AActor* Interactable, bool bSelected)
 {
 	if (IXInUInteractableInterface* InteractableInterface = Cast<IXInUInteractableInterface>(Interactable))
 	{
@@ -94,71 +94,132 @@ void UXInUInteractComponent::UpdateInteractableStatus_Client(AActor* Interactabl
 			// reset
 			InteractableComponent->ResetInteractionWidget();
 			
-			// Get all interaction tags from actor's InteractableData, and generate the status for each to update interaction widget
+			// if is in range and has interactable data
 			if (InteractablesInRange.Contains(Interactable) && InteractableComponent->InteractableData)
 			{
-				const FGameplayTagContainer InteractionTags = InteractableComponent->InteractableData->GetInteractionTags();
-				for (const FGameplayTag InteractionTag : InteractionTags)
+				// if selected, or unselected behaviour is to show interaction data
+				if (bSelected || InteractableComponent->UnselectedBehaviour == XInUIUB_ShowInteractions)
 				{
-					FGameplayTag InteractionStatus;
-					if (Interactable && GetInteractInterface()->CanInteract(Interactable, InteractionTag, InteractionStatus))
+					// Get all interaction tags from actor's InteractableData, and generate the status for each to update interaction widget
+					const FGameplayTagContainer InteractionTags = InteractableComponent->InteractableData->GetInteractionTags();
+					for (const FGameplayTag InteractionTag : InteractionTags)
 					{
-						InteractableComponent->AddEntryToInteractionWidget(InteractionTag, InteractionStatus);
+						FGameplayTag InteractionStatus;
+						if (Interactable && GetInteractInterface()->CanInteract(Interactable, InteractionTag, InteractionStatus))
+						{
+							InteractableComponent->AddEntryToInteractionWidget(InteractionTag, InteractionStatus);
+						}
 					}
+					InteractableComponent->ShowInteractionWidget(true);
 				}
+				// if not selected and show default
+				else if (InteractableComponent->UnselectedBehaviour == XInUIUB_ShowDefault)
+				{
+					InteractableComponent->AddDefaultEntryToInteractionWidget();
+					InteractableComponent->ShowInteractionWidget(true);
+				}
+				// if not selected and show none
+				else if (InteractableComponent->UnselectedBehaviour == XInUIUB_ShowNone)
+				{
+					InteractableComponent->ShowInteractionWidget(false);
+				}
+			}
+			// not in range or has no interactable data
+			else
+			{
+				InteractableComponent->ShowInteractionWidget(false);
 			}
 		}
 	}
 }
 
+void UXInUInteractComponent::OnInteractableAvailabilityChanged(AActor* Interactable, bool bAvailable)
+{
+	if (!bAvailable) RemoveInteractableInRange(Interactable);
+}
+
 void UXInUInteractComponent::AddInteractableInRange(AActor* NewInteractable)
 {
-	if (Cast<IXInUInteractableInterface>(NewInteractable))
+	InteractablesInRange.Remove(nullptr);
+	
+	if (IXInUInteractableInterface* InteractableInterface = Cast<IXInUInteractableInterface>(NewInteractable))
 	{
-		const TArray<AActor*> OldInteractablesInRange = InteractablesInRange;
+		// Bind delegate for Available state
+		if (UXInUInteractableComponent* InteractableComponent = InteractableInterface->GetInteractableComponent())
+		{
+			InteractableComponent->AvailableForInteractionDelegate.AddDynamic(this, &ThisClass::OnInteractableAvailabilityChanged);
+		}
+		
 		InteractablesInRange.Add(NewInteractable);
 
+		// update status for this interactable
 		if (GetPawn<APawn>()->IsLocallyControlled())
 		{
-			UpdateInteractableStatus_Client(NewInteractable);
+			UpdateInteractableStatus_Local(NewInteractable);
 		}
 	}
 }
 
 void UXInUInteractComponent::RemoveInteractableInRange(AActor* NewInteractable)
 {
-	if (GetPawn<APawn>()->IsLocallyControlled())
+	if (InteractablesInRange.Remove(NewInteractable) > 0)
 	{
-		UpdateInteractableStatus_Client(NewInteractable);
+		// remove binding of delegate for Available state
+		if (IXInUInteractableInterface* InteractableInterface = Cast<IXInUInteractableInterface>(NewInteractable))
+		{
+			if (UXInUInteractableComponent* InteractableComponent = InteractableInterface->GetInteractableComponent())
+			{
+				InteractableComponent->AvailableForInteractionDelegate.RemoveAll(this);
+			}
+		}
+
+		// update status for this interactable
+		if (GetPawn<APawn>()->IsLocallyControlled())
+		{
+			UpdateInteractableStatus_Local(NewInteractable);
+		}
 	}
-	
-	InteractablesInRange.Remove(NewInteractable);
 }
 
 void UXInUInteractComponent::Interact(FGameplayTag InteractionTag)
 {
-	if (GetInteractInterface())
-	{
-		FGameplayTag InteractionStatus;
-		const bool bCanInteract = SelectedInteractable && GetInteractInterface()->CanInteract(SelectedInteractable, InteractionTag, InteractionStatus);
-		
-		// TODO: interaction message based on InteractionStatus
+	ExecuteInteraction(SelectedInteractable, InteractionTag);
 
-		if (bCanInteract)
-		{
-			ServerInteract(SelectedInteractable, InteractionTag);	
-		}
+	// if not locally controlled on server, call server rpc
+	const bool bIsOnServer = HasAuthority() && GetPawn<APawn>()->IsLocallyControlled();
+	if (!bIsOnServer)
+	{
+		ServerInteract(SelectedInteractable, InteractionTag);
 	}
 }
 
 void UXInUInteractComponent::ServerInteract_Implementation(AActor* Interactable, FGameplayTag InteractionTag)
 {
-	if (Interactable && InteractablesInRange.Contains(Interactable))
+	ExecuteInteraction(Interactable, InteractionTag);
+}
+
+void UXInUInteractComponent::ExecuteInteraction(AActor* Interactable, FGameplayTag InteractionTag)
+{
+	// if no longer in range, set to null
+	if (!InteractablesInRange.Contains(Interactable)) Interactable = nullptr;
+	// if it cannot be interacted with, set to null
+	if (IXInUInteractableInterface* InteractableInterface = Cast<IXInUInteractableInterface>(Interactable))
 	{
-		if (GetInteractInterface())
+		if (UXInUInteractableComponent* InteractableComponent = InteractableInterface->GetInteractableComponent())
 		{
-			FGameplayTag InteractionStatus;
-			GetInteractInterface()->TryInteract(Interactable, InteractionTag, InteractionStatus);
+			if (!InteractableComponent->GetAvailableForInteraction()) Interactable = nullptr;
+		}
+	}
+	// NOTE: im setting to null instead of just returning, cause the result might differ from client to server.
+	// this way, for example, if client predicts an equip weapon function, the server can override equipping nullptr.
+	
+	if (GetInteractInterface())
+	{
+		FGameplayTag InteractionStatus;
+		if (GetInteractInterface()->CanInteract(Interactable, InteractionTag, InteractionStatus))
+		{
+			GetInteractInterface()->TryInteract(Interactable, InteractionTag);
 		}
 	}
 }
+

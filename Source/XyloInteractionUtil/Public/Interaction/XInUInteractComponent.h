@@ -42,20 +42,29 @@ protected:
 	IXInUInteractInterface* GetInteractInterface();
 	
 private:
+	/** List on interactable actors in range, is updated by AddInteractableInRange and RemoveInteractableInRange */
 	UPROPERTY()
 	TArray<AActor*> InteractablesInRange;
+	/** Only set locally from UpdateSelectedInteractable_Local */
 	UPROPERTY()
 	AActor* SelectedInteractable;
 
 protected:
-	virtual void UpdateSelectedInteractable_Client();
-	virtual void UpdateInteractableStatus_Client(AActor* Interactable);
-	
+	virtual void UpdateSelectedInteractable_Local();
+	virtual void UpdateInteractableStatus_Local(AActor* Interactable, bool bSelected = false);
+
+protected:
+	UFUNCTION()
+	virtual void OnInteractableAvailabilityChanged(AActor* Interactable, bool bAvailable);
 public:
+	/** Add an interactable actor to the in range list. Should be called both on client and server */
 	virtual void AddInteractableInRange(AActor* NewInteractable);
+	/** Remove an interactable actor from the in range list. Should be called both on client and server */
 	virtual void RemoveInteractableInRange(AActor* NewInteractable);
 
+	/** Function to call to start an interaction. should be called from locally controlled actors */
 	virtual void Interact(FGameplayTag InteractionTag);
 	UFUNCTION(Server, Reliable)
 	virtual void ServerInteract(AActor* Interactable, FGameplayTag InteractionTag);
+	virtual void ExecuteInteraction(AActor* Interactable, FGameplayTag InteractionTag);
 };
