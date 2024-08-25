@@ -58,8 +58,6 @@ void UXInUInteractableComponent::OnEnterInteractRange(UPrimitiveComponent* Overl
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult,
 	bool bInstantInteraction, FGameplayTag InstantInteractionTag)
 {
-	if (!bAvailableForInteraction) return;
-	
 	if (IXInUInteractInterface* InteractInterface = Cast<IXInUInteractInterface>(OtherActor))
 	{
 		if (UXInUInteractComponent* InteractComponent = InteractInterface->GetInteractComponent())

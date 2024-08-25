@@ -3,6 +3,9 @@
 
 #include "Interaction/XInUInteractComponent.h"
 
+#include <string>
+
+#include "GameFramework/HUD.h"
 #include "Interaction/XInUInteractableComponent.h"
 #include "Interaction/XInUInteractableData.h"
 #include "Interaction/XInUInteractableInterface.h"
@@ -33,6 +36,29 @@ void UXInUInteractComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	if (GetPawn<APawn>()->IsLocallyControlled())
 	{
 		UpdateSelectedInteractable_Local();
+		
+		if (bDebugArrayCount)
+		{
+			ENetRole LocalRole = GetPawn<APawn>()->GetLocalRole();
+			FString Role;
+			switch (LocalRole)
+			{
+			case ENetRole::ROLE_Authority:
+				Role = FString("Authority");
+				break;
+			case ENetRole::ROLE_AutonomousProxy:
+				Role = FString("Autonomous Proxy");
+				break;
+			case ENetRole::ROLE_SimulatedProxy:
+				Role = FString("Simulated Proxy");
+				break;
+			case ENetRole::ROLE_None:
+				Role = FString("None");
+				break;
+			}
+			FString LocalRoleString = FString::Printf(TEXT("Local Role: %s"), *Role) + "> " + FString::Printf(TEXT("InRange: %d"), InteractablesInRange.Num()) + " | "  + FString::Printf(TEXT("Disabled: %d"), DisabledInteractablesInRange.Num());
+			if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 0.f, LocalRole == ROLE_Authority ? FColor::Green : FColor::Blue, LocalRoleString);
+		}
 	}
 }
 
@@ -135,7 +161,22 @@ void UXInUInteractComponent::UpdateInteractableStatus_Local(AActor* Interactable
 
 void UXInUInteractComponent::OnInteractableAvailabilityChanged(AActor* Interactable, bool bAvailable)
 {
-	if (!bAvailable) RemoveInteractableInRange(Interactable);
+	// if set to available remove from disabled array and add to in range array
+	if (bAvailable)
+	{
+		if (DisabledInteractablesInRange.Remove(Interactable) > 0)
+		{
+			InteractablesInRange.Add(Interactable);
+		}
+	}
+	// if set in unavailable remove from in range array and add to disabled array
+	else
+	{
+		if (InteractablesInRange.Remove(Interactable) > 0)
+		{
+			DisabledInteractablesInRange.Add(Interactable);
+		}
+	}
 }
 
 void UXInUInteractComponent::AddInteractableInRange(AActor* NewInteractable)
@@ -148,21 +189,31 @@ void UXInUInteractComponent::AddInteractableInRange(AActor* NewInteractable)
 		if (UXInUInteractableComponent* InteractableComponent = InteractableInterface->GetInteractableComponent())
 		{
 			InteractableComponent->AvailableForInteractionDelegate.AddDynamic(this, &ThisClass::OnInteractableAvailabilityChanged);
-		}
-		
-		InteractablesInRange.Add(NewInteractable);
 
-		// update status for this interactable
-		if (GetPawn<APawn>()->IsLocallyControlled())
-		{
-			UpdateInteractableStatus_Local(NewInteractable);
+			// if available for interaction, add to in range array and update local status for this actor
+			if (InteractableComponent->GetAvailableForInteraction())
+			{
+				InteractablesInRange.Add(NewInteractable);
+
+				// update status for this interactable
+				if (GetPawn<APawn>()->IsLocallyControlled())
+				{
+					UpdateInteractableStatus_Local(NewInteractable);
+				}
+			}
+			// if not available for interaction, add to disabled array
+			else
+			{
+				DisabledInteractablesInRange.Add(NewInteractable);
+			}
 		}
 	}
 }
 
 void UXInUInteractComponent::RemoveInteractableInRange(AActor* NewInteractable)
 {
-	if (InteractablesInRange.Remove(NewInteractable) > 0)
+	const bool bWasAvailable = InteractablesInRange.Remove(NewInteractable) > 0;
+	if (bWasAvailable || DisabledInteractablesInRange.Remove(NewInteractable) > 0)
 	{
 		// remove binding of delegate for Available state
 		if (IXInUInteractableInterface* InteractableInterface = Cast<IXInUInteractableInterface>(NewInteractable))
@@ -172,22 +223,20 @@ void UXInUInteractComponent::RemoveInteractableInRange(AActor* NewInteractable)
 				InteractableComponent->AvailableForInteractionDelegate.RemoveAll(this);
 			}
 		}
+	}
 
-		// update status for this interactable
-		if (GetPawn<APawn>()->IsLocallyControlled())
-		{
-			UpdateInteractableStatus_Local(NewInteractable);
-		}
+	// update status for this interactable
+	if (bWasAvailable && GetPawn<APawn>()->IsLocallyControlled())
+	{
+		UpdateInteractableStatus_Local(NewInteractable);
 	}
 }
 
 void UXInUInteractComponent::Interact(FGameplayTag InteractionTag)
 {
 	ExecuteInteraction(SelectedInteractable, InteractionTag);
-
-	// if not locally controlled on server, call server rpc
-	const bool bIsOnServer = HasAuthority() && GetPawn<APawn>()->IsLocallyControlled();
-	if (!bIsOnServer)
+	
+	if (!HasAuthority())
 	{
 		ServerInteract(SelectedInteractable, InteractionTag);
 	}

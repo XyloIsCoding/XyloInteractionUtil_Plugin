@@ -45,6 +45,10 @@ private:
 	/** List on interactable actors in range, is updated by AddInteractableInRange and RemoveInteractableInRange */
 	UPROPERTY()
 	TArray<AActor*> InteractablesInRange;
+	/** List on interactable actors in range which are not available for interaction, is updated by
+	 * AddInteractableInRange, RemoveInteractableInRange and by bound delegate */
+	UPROPERTY()
+	TArray<AActor*> DisabledInteractablesInRange;
 	/** Only set locally from UpdateSelectedInteractable_Local */
 	UPROPERTY()
 	AActor* SelectedInteractable;
@@ -67,4 +71,16 @@ public:
 	UFUNCTION(Server, Reliable)
 	virtual void ServerInteract(AActor* Interactable, FGameplayTag InteractionTag);
 	virtual void ExecuteInteraction(AActor* Interactable, FGameplayTag InteractionTag);
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	/*
+	 * Debug
+	 */
+
+private:
+	UPROPERTY(EditAnywhere, Category = "Debug")
+	bool bDebugArrayCount = false;
+	
 };
