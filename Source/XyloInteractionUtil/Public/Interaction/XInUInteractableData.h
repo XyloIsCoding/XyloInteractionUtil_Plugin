@@ -39,7 +39,7 @@ struct FXInUInteractionDataRow
 /**
  * 
  */
-UCLASS(BlueprintType)
+UCLASS()
 class XYLOINTERACTIONUTIL_API UXInUInteractableData : public UDataAsset
 {
 	GENERATED_BODY()
@@ -51,10 +51,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TArray<FXInUInteractionDataRow> InteractionRows;
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Interaction")
 	FGameplayTagContainer GetInteractionTags();
 	
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Interaction")
 	TSubclassOf<UUserWidget> GetInteractionWidgetClass(const FGameplayTag InteractionTag, const FGameplayTag InteractionStatusTag);
 	
 };

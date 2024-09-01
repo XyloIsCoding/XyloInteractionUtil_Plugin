@@ -10,7 +10,7 @@
 class UXInUInteractComponent;
 
 // This class does not need to be modified.
-UINTERFACE(MinimalAPI, BlueprintType)
+UINTERFACE()
 class UXInUInteractInterface : public UInterface
 {
 	GENERATED_BODY()
@@ -24,13 +24,17 @@ class XYLOINTERACTIONUTIL_API IXInUInteractInterface
 	GENERATED_BODY()
 
 public:
-	virtual UXInUInteractComponent* GetInteractComponent() = 0;
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interaction")
+	UXInUInteractComponent* GetInteractComponent();
 
 	/** Get view location and direction for the locally controlled character */
-	virtual bool GetLocalPlayerView(FVector& LocalPlayerViewLocation, FVector& LocalPlayerViewDirection) = 0;
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interaction")
+	bool GetLocalPlayerView(FVector& LocalPlayerViewLocation, FVector& LocalPlayerViewDirection);
 
 	/** Checks if the interaction is possible. Called on both client and server */
-	virtual bool CanInteract(AActor* InteractableActor, FGameplayTag InteractionTag, FGameplayTag& OutStatusTag);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interaction")
+	bool CanInteract(AActor* InteractableActor, FGameplayTag InteractionTag, FGameplayTag& OutStatusTag);
 	/** Tries to perform the interaction. Called on both client and server */
-	virtual bool TryInteract(AActor* InteractableActor, FGameplayTag InteractionTag);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interaction")
+	bool TryInteract(AActor* InteractableActor, FGameplayTag InteractionTag);
 };

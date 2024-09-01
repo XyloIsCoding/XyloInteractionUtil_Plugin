@@ -60,7 +60,7 @@ void UXInUInteractableComponent::OnEnterInteractRange(UPrimitiveComponent* Overl
 {
 	if (IXInUInteractInterface* InteractInterface = Cast<IXInUInteractInterface>(OtherActor))
 	{
-		if (UXInUInteractComponent* InteractComponent = InteractInterface->GetInteractComponent())
+		if (UXInUInteractComponent* InteractComponent = InteractInterface->Execute_GetInteractComponent(OtherActor))
 		{
 			InteractComponent->AddInteractableInRange(GetOwner());
 		}
@@ -72,7 +72,7 @@ void UXInUInteractableComponent::OnExitInteractRange(UPrimitiveComponent* Overla
 {
 	if (IXInUInteractInterface* InteractInterface = Cast<IXInUInteractInterface>(OtherActor))
 	{
-		if (UXInUInteractComponent* InteractComponent = InteractInterface->GetInteractComponent())
+		if (UXInUInteractComponent* InteractComponent = InteractInterface->Execute_GetInteractComponent(OtherActor))
 		{
 			InteractComponent->RemoveInteractableInRange(GetOwner());
 		}

@@ -67,6 +67,7 @@ public:
 	virtual void RemoveInteractableInRange(AActor* NewInteractable);
 
 	/** Function to call to start an interaction. should be called from locally controlled actors */
+	UFUNCTION(BlueprintCallable, Category = "Interaction")
 	virtual void Interact(FGameplayTag InteractionTag);
 	UFUNCTION(Server, Reliable)
 	virtual void ServerInteract(AActor* Interactable, FGameplayTag InteractionTag);

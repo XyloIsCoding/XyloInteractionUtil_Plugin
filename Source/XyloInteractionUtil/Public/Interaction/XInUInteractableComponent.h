@@ -23,7 +23,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FResetInteractionWidgetSignature);
 
 class UXInUInteractableData;
 
-UCLASS(BlueprintType, ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class XYLOINTERACTIONUTIL_API UXInUInteractableComponent : public UActorComponent
 {
 	GENERATED_BODY()
@@ -49,7 +49,9 @@ public:
 	 */
 
 public:
-	FORCEINLINE virtual bool GetAvailableForInteraction() const { return bAvailableForInteraction; }
+	UFUNCTION(BlueprintCallable, Category = "Interaction")
+	virtual bool GetAvailableForInteraction() const { return bAvailableForInteraction; }
+	UFUNCTION(BlueprintCallable, Category = "Interaction")
 	virtual void SetAvailableForInteraction(bool bAvailable);
 private:
 	UPROPERTY(EditAnywhere, Category = "Interaction", ReplicatedUsing = OnRep_AvailableForInteraction)
@@ -57,7 +59,7 @@ private:
 	UFUNCTION()
 	virtual void OnRep_AvailableForInteraction();
 public:
-	UPROPERTY(BlueprintAssignable)
+	UPROPERTY(BlueprintAssignable, Category = "Interaction")
 	FAvailableForInteractionSignature AvailableForInteractionDelegate;
 	
 public:
@@ -72,11 +74,11 @@ public:
 public:
 	/** To be called when an actor enters the interaction range.
 	 * Checks if the actor has an interact component, if so, adds this actor to its inRange list */
-	UFUNCTION(BlueprintCallable) 
+	UFUNCTION(BlueprintCallable, Category = "Interaction") 
 	virtual void OnEnterInteractRange(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult, bool bInstantInteraction = false, FGameplayTag InstantInteractionTag = FGameplayTag());
 	/** To be called when an actor exits the interaction range.
 	 * Checks if the actor has an interact component, if so, removes this actor from its inRange list */
-	UFUNCTION(BlueprintCallable) 
+	UFUNCTION(BlueprintCallable, Category = "Interaction") 
 	virtual void OnExitInteractRange(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 public:
@@ -91,12 +93,12 @@ public:
 
 public:
 	/** Used to bind function to show/hide the interaction widget */
-	UPROPERTY(BlueprintAssignable)
+	UPROPERTY(BlueprintAssignable, Category = "Interaction")
 	FShowInteractionWidgetSignature ShowInteractionWidgetDelegate;
 	/** Used to bind function to add interaction widget rows to the interaction widget */
-	UPROPERTY(BlueprintAssignable)
+	UPROPERTY(BlueprintAssignable, Category = "Interaction")
 	FAddEntryToInteractionWidgetSignature AddEntryToInteractionWidgetDelegate;
 	/** Used to bind function to remove all widget rows from the interaction widget */
-	UPROPERTY(BlueprintAssignable)
+	UPROPERTY(BlueprintAssignable, Category = "Interaction")
 	FResetInteractionWidgetSignature ResetInteractionWidgetDelegate;
 };

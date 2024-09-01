@@ -84,7 +84,7 @@ void UXInUInteractComponent::UpdateSelectedInteractable_Local()
 	{
 		FVector ViewLocation;
 		FVector ViewDirection;
-		if (GetInteractInterface()->GetLocalPlayerView(ViewLocation, ViewDirection))
+		if (GetInteractInterface()->Execute_GetLocalPlayerView(GetOwner(), ViewLocation, ViewDirection))
 		{
 			float MaxCrossProduct = 0;
 			AActor* NewSelectedActor = nullptr;
@@ -115,7 +115,7 @@ void UXInUInteractComponent::UpdateInteractableStatus_Local(AActor* Interactable
 {
 	if (IXInUInteractableInterface* InteractableInterface = Cast<IXInUInteractableInterface>(Interactable))
 	{
-		if (UXInUInteractableComponent* InteractableComponent = InteractableInterface->GetInteractableComponent())
+		if (UXInUInteractableComponent* InteractableComponent = InteractableInterface->Execute_GetInteractableComponent(Interactable))
 		{
 			// reset
 			InteractableComponent->ResetInteractionWidget();
@@ -131,7 +131,7 @@ void UXInUInteractComponent::UpdateInteractableStatus_Local(AActor* Interactable
 					for (const FGameplayTag InteractionTag : InteractionTags)
 					{
 						FGameplayTag InteractionStatus;
-						if (Interactable && GetInteractInterface()->CanInteract(Interactable, InteractionTag, InteractionStatus))
+						if (Interactable && GetInteractInterface()->Execute_CanInteract(GetOwner(), Interactable, InteractionTag, InteractionStatus))
 						{
 							InteractableComponent->AddEntryToInteractionWidget(InteractionTag, InteractionStatus);
 						}
@@ -186,7 +186,7 @@ void UXInUInteractComponent::AddInteractableInRange(AActor* NewInteractable)
 	if (IXInUInteractableInterface* InteractableInterface = Cast<IXInUInteractableInterface>(NewInteractable))
 	{
 		// Bind delegate for Available state
-		if (UXInUInteractableComponent* InteractableComponent = InteractableInterface->GetInteractableComponent())
+		if (UXInUInteractableComponent* InteractableComponent = InteractableInterface->Execute_GetInteractableComponent(NewInteractable))
 		{
 			InteractableComponent->AvailableForInteractionDelegate.AddDynamic(this, &ThisClass::OnInteractableAvailabilityChanged);
 
@@ -218,7 +218,7 @@ void UXInUInteractComponent::RemoveInteractableInRange(AActor* NewInteractable)
 		// remove binding of delegate for Available state
 		if (IXInUInteractableInterface* InteractableInterface = Cast<IXInUInteractableInterface>(NewInteractable))
 		{
-			if (UXInUInteractableComponent* InteractableComponent = InteractableInterface->GetInteractableComponent())
+			if (UXInUInteractableComponent* InteractableComponent = InteractableInterface->Execute_GetInteractableComponent(NewInteractable))
 			{
 				InteractableComponent->AvailableForInteractionDelegate.RemoveAll(this);
 			}
@@ -254,7 +254,7 @@ void UXInUInteractComponent::ExecuteInteraction(AActor* Interactable, FGameplayT
 	// if it cannot be interacted with, set to null
 	if (IXInUInteractableInterface* InteractableInterface = Cast<IXInUInteractableInterface>(Interactable))
 	{
-		if (UXInUInteractableComponent* InteractableComponent = InteractableInterface->GetInteractableComponent())
+		if (UXInUInteractableComponent* InteractableComponent = InteractableInterface->Execute_GetInteractableComponent(Interactable))
 		{
 			if (!InteractableComponent->GetAvailableForInteraction()) Interactable = nullptr;
 		}
@@ -265,9 +265,9 @@ void UXInUInteractComponent::ExecuteInteraction(AActor* Interactable, FGameplayT
 	if (GetInteractInterface())
 	{
 		FGameplayTag InteractionStatus;
-		if (GetInteractInterface()->CanInteract(Interactable, InteractionTag, InteractionStatus))
+		if (GetInteractInterface()->Execute_CanInteract(GetOwner(), Interactable, InteractionTag, InteractionStatus))
 		{
-			GetInteractInterface()->TryInteract(Interactable, InteractionTag);
+			GetInteractInterface()->Execute_TryInteract(GetOwner(), Interactable, InteractionTag);
 		}
 	}
 }
