@@ -3,9 +3,6 @@
 
 #include "Interaction/XInUInteractComponent.h"
 
-#include <string>
-
-#include "GameFramework/HUD.h"
 #include "Interaction/XInUInteractableComponent.h"
 #include "Interaction/XInUInteractableData.h"
 #include "Interaction/XInUInteractableInterface.h"
