@@ -128,7 +128,8 @@ void UXInUInteractComponent::UpdateInteractableStatus_Local(AActor* Interactable
 					for (const FGameplayTag InteractionTag : InteractionTags)
 					{
 						FGameplayTag InteractionStatus;
-						if (Interactable && GetInteractInterface()->Execute_CanInteract(GetOwner(), Interactable, InteractionTag, InteractionStatus))
+						GetInteractInterface()->Execute_CanInteract(GetOwner(), Interactable, InteractionTag, InteractionStatus);
+						if (InteractionStatus.IsValid())
 						{
 							InteractableComponent->AddEntryToInteractionWidget(InteractionTag, InteractionStatus);
 						}
