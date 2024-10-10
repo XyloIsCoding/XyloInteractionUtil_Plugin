@@ -186,7 +186,7 @@ void UXInUInteractComponent::AddInteractableInRange(AActor* NewInteractable)
 		// Bind delegate for Available state
 		if (UXInUInteractableComponent* InteractableComponent = InteractableInterface->Execute_GetInteractableComponent(NewInteractable))
 		{
-			InteractableComponent->AvailableForInteractionDelegate.AddDynamic(this, &ThisClass::OnInteractableAvailabilityChanged);
+			InteractableComponent->AvailableForInteractionDelegate.AddUniqueDynamic(this, &ThisClass::OnInteractableAvailabilityChanged);
 
 			// if available for interaction, add to in range array and update local status for this actor
 			if (InteractableComponent->GetAvailableForInteraction())
