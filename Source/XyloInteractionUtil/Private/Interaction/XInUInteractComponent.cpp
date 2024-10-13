@@ -230,22 +230,22 @@ void UXInUInteractComponent::RemoveInteractableInRange(AActor* NewInteractable)
 	}
 }
 
-void UXInUInteractComponent::Interact(FGameplayTag InteractionTag)
+void UXInUInteractComponent::InputInteract(FGameplayTag InteractionTag)
 {
-	ExecuteInteraction(SelectedInteractable, InteractionTag);
+	Interact(SelectedInteractable, InteractionTag);
 	
 	if (!HasAuthority())
 	{
-		ServerInteract(SelectedInteractable, InteractionTag);
+		ServerInteractRPC(SelectedInteractable, InteractionTag);
 	}
 }
 
-void UXInUInteractComponent::ServerInteract_Implementation(AActor* Interactable, FGameplayTag InteractionTag)
+void UXInUInteractComponent::ServerInteractRPC_Implementation(AActor* Interactable, FGameplayTag InteractionTag)
 {
-	ExecuteInteraction(Interactable, InteractionTag);
+	Interact(Interactable, InteractionTag);
 }
 
-void UXInUInteractComponent::ExecuteInteraction(AActor* Interactable, FGameplayTag InteractionTag)
+void UXInUInteractComponent::Interact(AActor* Interactable, FGameplayTag InteractionTag)
 {
 	// if no longer in range, set to null
 	if (!InteractablesInRange.Contains(Interactable)) Interactable = nullptr;

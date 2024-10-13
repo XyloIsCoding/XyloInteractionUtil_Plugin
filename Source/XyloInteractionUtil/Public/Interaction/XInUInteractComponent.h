@@ -66,12 +66,14 @@ public:
 	/** Remove an interactable actor from the in range list. Should be called both on client and server */
 	virtual void RemoveInteractableInRange(AActor* NewInteractable);
 
-	/** Function to call to start an interaction. should be called from locally controlled actors */
+	/** Function to call to start an interaction. should be called from locally controlled actors.
+	 * (Calls ExecuteInteraction, and if not authority calls ServerInteractRPC) */
 	UFUNCTION(BlueprintCallable, Category = "Interaction")
-	virtual void Interact(FGameplayTag InteractionTag);
+	virtual void InputInteract(FGameplayTag InteractionTag);
 	UFUNCTION(Server, Reliable)
-	virtual void ServerInteract(AActor* Interactable, FGameplayTag InteractionTag);
-	virtual void ExecuteInteraction(AActor* Interactable, FGameplayTag InteractionTag);
+	/** Calls ExecuteInteraction */
+	virtual void ServerInteractRPC(AActor* Interactable, FGameplayTag InteractionTag);
+	virtual void Interact(AActor* Interactable, FGameplayTag InteractionTag);
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
