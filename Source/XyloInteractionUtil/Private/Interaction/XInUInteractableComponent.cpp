@@ -46,7 +46,7 @@ void UXInUInteractableComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 void UXInUInteractableComponent::SetAvailableForInteraction(bool bAvailable)
 {
 	bAvailableForInteraction = bAvailable;
-	AvailableForInteractionDelegate.Broadcast(GetOwner(), bAvailableForInteraction);
+	OnRep_AvailableForInteraction();
 }
 
 void UXInUInteractableComponent::OnRep_AvailableForInteraction()

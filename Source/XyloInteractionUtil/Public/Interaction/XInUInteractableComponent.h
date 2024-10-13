@@ -56,6 +56,7 @@ public:
 private:
 	UPROPERTY(EditAnywhere, Category = "Interaction", ReplicatedUsing = OnRep_AvailableForInteraction)
 	bool bAvailableForInteraction;
+protected:
 	UFUNCTION()
 	virtual void OnRep_AvailableForInteraction();
 public:
