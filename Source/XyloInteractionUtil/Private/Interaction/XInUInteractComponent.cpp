@@ -75,6 +75,14 @@ IXInUInteractInterface* UXInUInteractComponent::GetInteractInterface()
 	return InteractInterface;
 }
 
+void UXInUInteractComponent::RefreshAllInteractableStatus_Local()
+{
+	for (AActor* Actor : InteractablesInRange)
+	{
+		UpdateInteractableStatus_Local(Actor, Actor == SelectedInteractable);
+	}
+}
+
 void UXInUInteractComponent::UpdateSelectedInteractable_Local()
 {
 	if (GetInteractInterface())

@@ -53,6 +53,8 @@ private:
 	UPROPERTY()
 	AActor* SelectedInteractable;
 
+public:
+	virtual void RefreshAllInteractableStatus_Local();
 protected:
 	virtual void UpdateSelectedInteractable_Local();
 	virtual void UpdateInteractableStatus_Local(AActor* Interactable, bool bSelected = false);
