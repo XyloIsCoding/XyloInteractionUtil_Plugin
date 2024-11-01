@@ -57,9 +57,12 @@ public:
 	virtual void RefreshAllInteractableStatus_Local();
 protected:
 	virtual void UpdateSelectedInteractable_Local();
+	/** Should be always called for Interactables when adding or removing them from InteractablesInRange.
+	 * Is also called by RefreshAllInteractableStatus_Local and UpdateSelectedInteractable_Local */
 	virtual void UpdateInteractableStatus_Local(AActor* Interactable, bool bSelected = false);
 
 protected:
+	/** Bound to Interactable::AvailableForInteractionDelegate on both client and server */
 	UFUNCTION()
 	virtual void OnInteractableAvailabilityChanged(AActor* Interactable, bool bAvailable);
 public:

@@ -108,7 +108,7 @@ void UXInUInteractComponent::UpdateSelectedInteractable_Local()
 
 			if (NewSelectedActor != SelectedInteractable)
 			{
-				UpdateInteractableStatus_Local(SelectedInteractable);
+				UpdateInteractableStatus_Local(SelectedInteractable, false);
 				SelectedInteractable = NewSelectedActor;
 				UpdateInteractableStatus_Local(NewSelectedActor, true);
 			}
@@ -172,7 +172,7 @@ void UXInUInteractComponent::OnInteractableAvailabilityChanged(AActor* Interacta
 	{
 		if (DisabledInteractablesInRange.Remove(Interactable) > 0)
 		{
-			InteractablesInRange.Add(Interactable);
+			InteractablesInRange.AddUnique(Interactable);
 		}
 	}
 	// if set in unavailable remove from in range array and add to disabled array
@@ -180,8 +180,14 @@ void UXInUInteractComponent::OnInteractableAvailabilityChanged(AActor* Interacta
 	{
 		if (InteractablesInRange.Remove(Interactable) > 0)
 		{
-			DisabledInteractablesInRange.Add(Interactable);
+			DisabledInteractablesInRange.AddUnique(Interactable);
 		}
+	}
+
+	// update status for this interactable
+	if (GetPawn<APawn>() && GetPawn<APawn>()->IsLocallyControlled())
+	{
+		UpdateInteractableStatus_Local(Interactable, Interactable == SelectedInteractable);
 	}
 }
 
@@ -199,18 +205,18 @@ void UXInUInteractComponent::AddInteractableInRange(AActor* NewInteractable)
 			// if available for interaction, add to in range array and update local status for this actor
 			if (InteractableComponent->GetAvailableForInteraction())
 			{
-				InteractablesInRange.Add(NewInteractable);
+				InteractablesInRange.AddUnique(NewInteractable);
 
 				// update status for this interactable
-				if (GetPawn<APawn>()->IsLocallyControlled())
+				if (GetPawn<APawn>() && GetPawn<APawn>()->IsLocallyControlled())
 				{
-					UpdateInteractableStatus_Local(NewInteractable);
+					UpdateInteractableStatus_Local(NewInteractable, false);
 				}
 			}
 			// if not available for interaction, add to disabled array
 			else
 			{
-				DisabledInteractablesInRange.Add(NewInteractable);
+				DisabledInteractablesInRange.AddUnique(NewInteractable);
 			}
 		}
 	}
@@ -230,11 +236,14 @@ void UXInUInteractComponent::RemoveInteractableInRange(AActor* NewInteractable)
 			}
 		}
 	}
-
-	// update status for this interactable
-	if (bWasAvailable && GetPawn<APawn>()->IsLocallyControlled())
+	
+	if (bWasAvailable)
 	{
-		UpdateInteractableStatus_Local(NewInteractable);
+		// update status for this interactable
+		if (GetPawn<APawn>() && GetPawn<APawn>()->IsLocallyControlled())
+		{
+			UpdateInteractableStatus_Local(NewInteractable, false);
+		}
 	}
 }
 
