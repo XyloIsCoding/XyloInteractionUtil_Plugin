@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// Copyright XyloIsCoding 2024
 
 
 #include "Interaction/XInUInteractInterface.h"
