@@ -1,12 +1,12 @@
 // Copyright XyloIsCoding 2024
 
 
-#include "Interaction/XInUInteractComponent.h"
+#include "Interaction/Interact/XInUInteractComponent.h"
 
-#include "Interaction/XInUInteractableComponent.h"
-#include "Interaction/XInUInteractableData.h"
-#include "Interaction/XInUInteractableInterface.h"
-#include "Interaction/XInUInteractInterface.h"
+#include "Interaction/Interactable/XInUInteractableComponent.h"
+#include "Interaction/Interactable/Data/XInUInteractableData.h"
+#include "Interaction/Interactable/XInUInteractableInterface.h"
+#include "Interaction/Interact/XInUInteractInterface.h"
 
 UXInUInteractComponent::UXInUInteractComponent(const FObjectInitializer& ObjectInitializer)
 	:Super(ObjectInitializer)

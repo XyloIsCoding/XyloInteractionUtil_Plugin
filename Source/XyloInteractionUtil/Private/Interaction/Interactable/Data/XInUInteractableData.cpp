@@ -1,7 +1,7 @@
 // Copyright XyloIsCoding 2024
 
 
-#include "Interaction/XInUInteractableData.h"
+#include "Interaction/Interactable/Data/XInUInteractableData.h"
 
 FGameplayTagContainer UXInUInteractableData::GetInteractionTags()
 {

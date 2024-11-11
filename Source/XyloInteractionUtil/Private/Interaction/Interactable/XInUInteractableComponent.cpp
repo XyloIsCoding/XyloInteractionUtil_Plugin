@@ -1,12 +1,12 @@
 // Copyright XyloIsCoding 2024
 
 
-#include "Interaction/XInUInteractableComponent.h"
+#include "Interaction/Interactable/XInUInteractableComponent.h"
 
 #include "Blueprint/UserWidget.h"
-#include "Interaction/XInUInteractableData.h"
-#include "Interaction/XInUInteractComponent.h"
-#include "Interaction/XInUInteractInterface.h"
+#include "Interaction/Interactable/Data/XInUInteractableData.h"
+#include "Interaction/Interact/XInUInteractComponent.h"
+#include "Interaction/Interact/XInUInteractInterface.h"
 #include "Net/UnrealNetwork.h"
 
 UXInUInteractableComponent::UXInUInteractableComponent()
