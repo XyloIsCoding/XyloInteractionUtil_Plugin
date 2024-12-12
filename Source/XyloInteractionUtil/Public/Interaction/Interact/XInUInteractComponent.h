@@ -10,6 +10,16 @@
 class IXInUInteractInterface;
 struct FGameplayTag;
 
+USTRUCT()
+struct FXInUInteractablesContainer
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY()
+	TArray<AActor*> Interactables;
+};
+
 UCLASS(BlueprintType, ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class XYLOINTERACTIONUTIL_API UXInUInteractComponent : public UPawnComponent
 {
@@ -36,22 +46,25 @@ public:
 	 * Interact
 	 */
 
-private:
-	IXInUInteractInterface* InteractInterface;
 protected:
 	IXInUInteractInterface* GetInteractInterface();
-	
+
+protected:
+	virtual void SetSelectedInteractable(const FGameplayTag InteractionChannel, AActor* NewInteractable);
+	virtual AActor* GetSelectedInteractable(const FGameplayTag InteractionChannel);
+	virtual bool IsInteractableInRange(const FGameplayTag InteractionChannel, const AActor* Interactable) const;
+	virtual int32 RemoveInteractableFromInRangeMap(const FGameplayTag InteractionChannel, AActor* Interactable);
 private:
 	/** List on interactable actors in range, is updated by AddInteractableInRange and RemoveInteractableInRange */
 	UPROPERTY()
-	TArray<AActor*> InteractablesInRange;
+	TMap<FGameplayTag, FXInUInteractablesContainer> InteractablesInRange;
 	/** List on interactable actors in range which are not available for interaction, is updated by
 	 * AddInteractableInRange, RemoveInteractableInRange and by bound delegate */
 	UPROPERTY()
 	TArray<AActor*> DisabledInteractablesInRange;
 	/** Only set locally from UpdateSelectedInteractable_Local */
 	UPROPERTY()
-	AActor* SelectedInteractable;
+	TMap<FGameplayTag, AActor*> SelectedInteractable;
 
 public:
 	virtual void RefreshAllInteractableStatus_Local();
@@ -59,7 +72,7 @@ protected:
 	virtual void UpdateSelectedInteractable_Local();
 	/** Should be always called for Interactables when adding or removing them from InteractablesInRange.
 	 * Is also called by RefreshAllInteractableStatus_Local and UpdateSelectedInteractable_Local */
-	virtual void UpdateInteractableStatus_Local(AActor* Interactable, bool bSelected = false);
+	virtual void UpdateInteractableStatus_Local(AActor* Interactable, const bool bSelected = false);
 
 protected:
 	/** Bound to Interactable::AvailableForInteractionDelegate on both client and server */
@@ -74,11 +87,11 @@ public:
 	/** Function to call to start an interaction. should be called from locally controlled actors.
 	 * (Calls ExecuteInteraction, and if not authority calls ServerInteractRPC) */
 	UFUNCTION(BlueprintCallable, Category = "Interaction")
-	virtual void InputInteract(FGameplayTag InteractionTag);
+	virtual void InputInteract(const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag);
 	UFUNCTION(Server, Reliable)
 	/** Calls ExecuteInteraction */
-	virtual void ServerInteractRPC(AActor* Interactable, FGameplayTag InteractionTag);
-	virtual void Interact(AActor* Interactable, FGameplayTag InteractionTag);
+	virtual void ServerInteractRPC(AActor* Interactable, const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag);
+	virtual void Interact(AActor* Interactable, const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag);
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

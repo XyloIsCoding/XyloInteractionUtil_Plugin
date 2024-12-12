@@ -8,7 +8,7 @@
 #include "XInUInteractableComponent.generated.h"
 
 UENUM(BlueprintType)
-enum EXInUInteractableUnselectedBehaviour
+enum class EXInUInteractableUnselectedBehaviour : uint8
 {
 	XInUIUB_ShowInteractions UMETA(DisplayName = "Show Interactions"),
 	XInUIUB_ShowDefault UMETA(DisplayName = "Show Default"),
@@ -16,8 +16,8 @@ enum EXInUInteractableUnselectedBehaviour
 };
 
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAvailableForInteractionSignature, AActor*, Interactable, bool, AvailableForInteraction);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FShowInteractionWidgetSignature, bool, ShowInteractionWidget);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAvailableForInteractionSignature, AActor*, Interactable, bool, bAvailableForInteraction);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FShowInteractionWidgetSignature, const bool, ShowInteractionWidget);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAddEntryToInteractionWidgetSignature, TSubclassOf<UUserWidget>, InteractionWidgetEntryClass);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FResetInteractionWidgetSignature);
 
@@ -62,15 +62,18 @@ protected:
 public:
 	UPROPERTY(BlueprintAssignable, Category = "Interaction")
 	FAvailableForInteractionSignature AvailableForInteractionDelegate;
-	
+
 public:
+	virtual UXInUInteractableData* GetInteractableData() const { return InteractableData; }
+	virtual EXInUInteractableUnselectedBehaviour GetUnselectedBehaviour() const { return UnselectedBehaviour; }
+	virtual FGameplayTag GetInteractionChannelTag() const;
+private:
 	/** Data asset containing the possible interactions and the widgets to show for each of them */
 	UPROPERTY(EditAnywhere, Category = "Interaction")
 	UXInUInteractableData* InteractableData;
-
 	/** Behaviour of the interaction widget, when this actor is in range but not selected */
 	UPROPERTY(EditAnywhere, Category = "Interaction")
-	TEnumAsByte<EXInUInteractableUnselectedBehaviour> UnselectedBehaviour;
+	EXInUInteractableUnselectedBehaviour UnselectedBehaviour;
 	
 public:
 	/** To be called when an actor enters the interaction range.

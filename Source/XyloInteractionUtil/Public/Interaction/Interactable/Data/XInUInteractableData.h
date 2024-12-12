@@ -46,6 +46,9 @@ class XYLOINTERACTIONUTIL_API UXInUInteractableData : public UDataAsset
 
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	FGameplayTag InteractionChannelTag;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TSubclassOf<UUserWidget> DefaultInteractionWidgetClass;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
