@@ -15,6 +15,7 @@ UXInUInteractableComponent::UXInUInteractableComponent()
 	SetIsReplicatedByDefault(true);
 
 	bAvailableForInteraction = true;
+	UnselectedBehaviour = EXInUInteractableUnselectedBehaviour::XInUIUB_ShowDefault;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -64,8 +65,8 @@ FGameplayTag UXInUInteractableComponent::GetInteractionChannelTag() const
 }
 
 void UXInUInteractableComponent::OnEnterInteractRange(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-                                                      UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult,
-                                                      bool bInstantInteraction, FGameplayTag InstantInteractionTag)
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult,
+	bool bInstantInteraction, FGameplayTag InstantInteractionTag)
 {
 	if (IXInUInteractInterface* InteractInterface = Cast<IXInUInteractInterface>(OtherActor))
 	{
@@ -84,38 +85,6 @@ void UXInUInteractableComponent::OnExitInteractRange(UPrimitiveComponent* Overla
 		if (UXInUInteractComponent* InteractComponent = InteractInterface->Execute_GetInteractComponent(OtherActor))
 		{
 			InteractComponent->RemoveInteractableInRange(GetOwner());
-		}
-	}
-}
-
-void UXInUInteractableComponent::ShowInteractionWidget(bool bShow)
-{
-	ShowInteractionWidgetDelegate.Broadcast(bShow);
-}
-
-void UXInUInteractableComponent::ResetInteractionWidget()
-{
-	ResetInteractionWidgetDelegate.Broadcast();
-}
-
-void UXInUInteractableComponent::AddDefaultEntryToInteractionWidget()
-{
-	if (InteractableData)
-	{
-		if (const TSubclassOf<UUserWidget> EntryWidgetClass = InteractableData->DefaultInteractionWidgetClass)
-		{
-			AddEntryToInteractionWidgetDelegate.Broadcast(EntryWidgetClass);
-		}
-	}
-}
-
-void UXInUInteractableComponent::AddEntryToInteractionWidget(FGameplayTag InteractionTag, FGameplayTag StatusTag)
-{
-	if (InteractableData)
-	{
-		if (const TSubclassOf<UUserWidget> EntryWidgetClass = InteractableData->GetInteractionWidgetClass(InteractionTag, StatusTag))
-		{
-			AddEntryToInteractionWidgetDelegate.Broadcast(EntryWidgetClass);
 		}
 	}
 }

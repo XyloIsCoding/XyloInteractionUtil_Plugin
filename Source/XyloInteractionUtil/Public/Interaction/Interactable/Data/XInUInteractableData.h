@@ -58,6 +58,6 @@ public:
 	FGameplayTagContainer GetInteractionTags();
 	
 	UFUNCTION(BlueprintCallable, Category = "Interaction")
-	TSubclassOf<UUserWidget> GetInteractionWidgetClass(const FGameplayTag InteractionTag, const FGameplayTag InteractionStatusTag);
+	TSubclassOf<UUserWidget> GetInteractionWidgetClass(const FGameplayTag InteractionTag, const FGameplayTag InteractionStatusTag) const;
 	
 };

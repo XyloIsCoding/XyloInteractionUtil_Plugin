@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/PawnComponent.h"
+#include "Interaction/XInUBaseInteractionComponent.h"
 #include "XInUInteractComponent.generated.h"
 
 
@@ -21,7 +22,7 @@ public:
 };
 
 UCLASS(BlueprintType, ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class XYLOINTERACTIONUTIL_API UXInUInteractComponent : public UPawnComponent
+class XYLOINTERACTIONUTIL_API UXInUInteractComponent : public UXInUBaseInteractionComponent
 {
 	GENERATED_BODY()
 
@@ -54,6 +55,7 @@ protected:
 	virtual AActor* GetSelectedInteractable(const FGameplayTag InteractionChannel);
 	virtual bool IsInteractableInRange(const FGameplayTag InteractionChannel, const AActor* Interactable) const;
 	virtual int32 RemoveInteractableFromInRangeMap(const FGameplayTag InteractionChannel, AActor* Interactable);
+	virtual int32 AddInteractableToInRangeMap(const FGameplayTag InteractionChannel, AActor* Interactable);
 private:
 	/** List on interactable actors in range, is updated by AddInteractableInRange and RemoveInteractableInRange */
 	UPROPERTY()
@@ -77,7 +79,7 @@ protected:
 protected:
 	/** Bound to Interactable::AvailableForInteractionDelegate on both client and server */
 	UFUNCTION()
-	virtual void OnInteractableAvailabilityChanged(AActor* Interactable, bool bAvailable);
+	virtual void OnInteractableAvailabilityChanged(AActor* Interactable, const bool bAvailable);
 public:
 	/** Add an interactable actor to the in range list. Should be called both on client and server */
 	virtual void AddInteractableInRange(AActor* NewInteractable);

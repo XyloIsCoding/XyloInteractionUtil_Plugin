@@ -13,7 +13,7 @@ FGameplayTagContainer UXInUInteractableData::GetInteractionTags()
 	return InteractionTags;
 }
 
-TSubclassOf<UUserWidget> UXInUInteractableData::GetInteractionWidgetClass(const FGameplayTag InteractionTag, const FGameplayTag InteractionStatusTag)
+TSubclassOf<UUserWidget> UXInUInteractableData::GetInteractionWidgetClass(const FGameplayTag InteractionTag, const FGameplayTag InteractionStatusTag) const
 {
 	// look for the interaction data for the interaction tag
 	for (FXInUInteractionDataRow InteractionDataRow : InteractionRows)

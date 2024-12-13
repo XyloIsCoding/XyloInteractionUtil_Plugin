@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "Components/ActorComponent.h"
+#include "Interaction/XInUBaseInteractionComponent.h"
 #include "XInUInteractableComponent.generated.h"
 
 UENUM(BlueprintType)
@@ -16,15 +17,12 @@ enum class EXInUInteractableUnselectedBehaviour : uint8
 };
 
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAvailableForInteractionSignature, AActor*, Interactable, bool, bAvailableForInteraction);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FShowInteractionWidgetSignature, const bool, ShowInteractionWidget);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAddEntryToInteractionWidgetSignature, TSubclassOf<UUserWidget>, InteractionWidgetEntryClass);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FResetInteractionWidgetSignature);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FAvailableForInteractionSignature, AActor*, Interactable, const bool, bAvailableForInteraction);
 
 class UXInUInteractableData;
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class XYLOINTERACTIONUTIL_API UXInUInteractableComponent : public UActorComponent
+class XYLOINTERACTIONUTIL_API UXInUInteractableComponent : public UXInUBaseInteractionComponent
 {
 	GENERATED_BODY()
 
@@ -64,7 +62,9 @@ public:
 	FAvailableForInteractionSignature AvailableForInteractionDelegate;
 
 public:
+	UFUNCTION(BlueprintCallable)
 	virtual UXInUInteractableData* GetInteractableData() const { return InteractableData; }
+	UFUNCTION(BlueprintCallable)
 	virtual EXInUInteractableUnselectedBehaviour GetUnselectedBehaviour() const { return UnselectedBehaviour; }
 	virtual FGameplayTag GetInteractionChannelTag() const;
 private:
@@ -84,25 +84,5 @@ public:
 	 * Checks if the actor has an interact component, if so, removes this actor from its inRange list */
 	UFUNCTION(BlueprintCallable, Category = "Interaction") 
 	virtual void OnExitInteractRange(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
-
-public:
-	/** Broadcasts ShowInteractionWidgetDelegate */
-	virtual void ShowInteractionWidget(bool bShow);
-	/** Broadcasts ResetInteractionWidgetDelegate */
-	virtual void ResetInteractionWidget();
-	/** Broadcasts AddEntryToInteractionWidgetDelegate, with default interaction widget row */
-	virtual void AddDefaultEntryToInteractionWidget();
-	/** Broadcasts AddEntryToInteractionWidgetDelegate, with interaction widget row belonging to the interaction and status tags */
-	virtual void AddEntryToInteractionWidget(FGameplayTag InteractionTag, FGameplayTag StatusTag);
-
-public:
-	/** Used to bind function to show/hide the interaction widget */
-	UPROPERTY(BlueprintAssignable, Category = "Interaction")
-	FShowInteractionWidgetSignature ShowInteractionWidgetDelegate;
-	/** Used to bind function to add interaction widget rows to the interaction widget */
-	UPROPERTY(BlueprintAssignable, Category = "Interaction")
-	FAddEntryToInteractionWidgetSignature AddEntryToInteractionWidgetDelegate;
-	/** Used to bind function to remove all widget rows from the interaction widget */
-	UPROPERTY(BlueprintAssignable, Category = "Interaction")
-	FResetInteractionWidgetSignature ResetInteractionWidgetDelegate;
+	
 };

@@ -30,13 +30,13 @@ void UXInUInteractComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	
-	if (GetPawn<APawn>()->IsLocallyControlled())
+	if (GetOwner<APawn>()->IsLocallyControlled())
 	{
 		UpdateSelectedInteractable_Local();
 		
 		if (bDebugArrayCount)
 		{
-			ENetRole LocalRole = GetPawn<APawn>()->GetLocalRole();
+			ENetRole LocalRole = GetOwner<APawn>()->GetLocalRole();
 			FString Role;
 			switch (LocalRole)
 			{
@@ -73,6 +73,10 @@ IXInUInteractInterface* UXInUInteractComponent::GetInteractInterface()
 
 void UXInUInteractComponent::SetSelectedInteractable(const FGameplayTag InteractionChannel, AActor* NewInteractable)
 {
+	if (!SelectedInteractable.Contains(InteractionChannel))
+	{
+		SelectedInteractable.Emplace(InteractionChannel);
+	}
 	SelectedInteractable[InteractionChannel] = NewInteractable;
 }
 
@@ -96,6 +100,15 @@ int32 UXInUInteractComponent::RemoveInteractableFromInRangeMap(const FGameplayTa
 	return InteractablesInRange[InteractionChannel].Interactables.Remove(Interactable);
 }
 
+int32 UXInUInteractComponent::AddInteractableToInRangeMap(const FGameplayTag InteractionChannel, AActor* Interactable)
+{
+	if (!InteractablesInRange.Contains(InteractionChannel))
+	{
+		InteractablesInRange.Emplace(InteractionChannel, FXInUInteractablesContainer());
+	}
+	return InteractablesInRange[InteractionChannel].Interactables.AddUnique(Interactable);
+}
+
 void UXInUInteractComponent::RefreshAllInteractableStatus_Local()
 {
 	TArray<FGameplayTag> InteractionChannels;
@@ -111,39 +124,39 @@ void UXInUInteractComponent::RefreshAllInteractableStatus_Local()
 
 void UXInUInteractComponent::UpdateSelectedInteractable_Local()
 {
-	if (GetInteractInterface())
-	{
-		FVector ViewLocation;
-		FVector ViewDirection;
-		if (GetInteractInterface()->Execute_GetLocalPlayerView(GetOwner(), ViewLocation, ViewDirection))
-		{
-			float MaxCrossProduct = 0;
-			AActor* NewSelectedActor = nullptr;
-			
-			TArray<FGameplayTag> InteractionChannels;
-			InteractablesInRange.GetKeys(InteractionChannels);
-			for (FGameplayTag InteractionChannel : InteractionChannels)
-			{
-				for (AActor* Interactable : InteractablesInRange[InteractionChannel].Interactables)
-				{
-					if (Interactable)
-					{
-						const float NewCrossProduct = (Interactable->GetActorLocation() - ViewLocation).GetSafeNormal() | ViewDirection;
-						if (NewCrossProduct > MaxCrossProduct)
-						{
-							MaxCrossProduct = NewCrossProduct;
-							NewSelectedActor = Interactable;
-						}
-					}
-				}
+	IXInUInteractInterface* InteractInterface = GetInteractInterface();
+	if (!InteractInterface) return;
+	
+	FVector ViewLocation;
+	FVector ViewDirection;
+	if (!InteractInterface->Execute_GetLocalPlayerView(GetOwner(), ViewLocation, ViewDirection)) return;
 
-				if (NewSelectedActor != GetSelectedInteractable(InteractionChannel))
+	// for each InteractionChannel find the interactable in range that is closer to the center of the screen
+	TArray<FGameplayTag> InteractionChannels;
+	InteractablesInRange.GetKeys(InteractionChannels);
+	for (FGameplayTag InteractionChannel : InteractionChannels)
+	{
+		float MaxCrossProduct = 0;
+		AActor* NewSelectedActor = nullptr;
+		for (AActor* Interactable : InteractablesInRange[InteractionChannel].Interactables)
+		{
+			if (Interactable)
+			{
+				const float NewCrossProduct = (Interactable->GetActorLocation() - ViewLocation).GetSafeNormal() | ViewDirection;
+				if (NewCrossProduct > MaxCrossProduct)
 				{
-					UpdateInteractableStatus_Local(GetSelectedInteractable(InteractionChannel), false);
-					SetSelectedInteractable(InteractionChannel, NewSelectedActor);
-					UpdateInteractableStatus_Local(NewSelectedActor, true);
+					MaxCrossProduct = NewCrossProduct;
+					NewSelectedActor = Interactable;
 				}
 			}
+		}
+
+		// if we found a new closer interactable, update the status of both old and new
+		if (NewSelectedActor != GetSelectedInteractable(InteractionChannel))
+		{
+			UpdateInteractableStatus_Local(GetSelectedInteractable(InteractionChannel), false);
+			SetSelectedInteractable(InteractionChannel, NewSelectedActor);
+			UpdateInteractableStatus_Local(NewSelectedActor, true);
 		}
 	}
 }
@@ -155,21 +168,38 @@ void UXInUInteractComponent::UpdateInteractableStatus_Local(AActor* Interactable
 	IXInUInteractableInterface* InteractableInterface = Cast<IXInUInteractableInterface>(Interactable);
 	if (!InteractableInterface) return;
 	
-	UXInUInteractableComponent* InteractableComponent = InteractableInterface->GetInteractableComponent();
+	UXInUInteractableComponent* InteractableComponent = InteractableInterface->Execute_GetInteractableComponent(Interactable);
 	if (!InteractableComponent) return;
 
 	const FGameplayTag InteractionChannel = InteractableComponent->GetInteractionChannelTag();
 	if (!InteractionChannel.IsValid()) return;
 	
 	// reset
-	InteractableComponent->ResetInteractionWidget();
-	
-	// if is in range and has interactable data
-	if (IsInteractableInRange(InteractionChannel, Interactable) && InteractableComponent->GetInteractableData())
+	InteractableComponent->ResetInteractionEntries(InteractionChannel);
+	ResetInteractionEntries(InteractionChannel);
+
+	// not in range or has no interactable data
+	const UXInUInteractableData* InteractableData = InteractableComponent->GetInteractableData();
+	if (!Interactable || !IsInteractableInRange(InteractionChannel, Interactable))
 	{
-		// if selected, or unselected behaviour is to show interaction data
+		InteractableComponent->ShowInteractionWidget(false);
+		return;
+	}
+	
+	if (!bSelected && InteractableComponent->GetUnselectedBehaviour() == EXInUInteractableUnselectedBehaviour::XInUIUB_ShowNone)
+	{
+		// if not selected and show none
+		InteractableComponent->ShowInteractionWidget(false);
+	}
+	else // selected or unselected and (show default, or show interactions)
+	{
+		FXInUInteractionInfo InteractionInfo;
+		InteractionInfo.Interactable = Interactable;
+		InteractionInfo.InteractionChannel = InteractionChannel;
+
 		if (bSelected || InteractableComponent->GetUnselectedBehaviour() == EXInUInteractableUnselectedBehaviour::XInUIUB_ShowInteractions)
 		{
+			// if selected, or unselected behaviour is to show interaction data
 			// Get all interaction tags from actor's InteractableData, and generate the status for each to update interaction widget
 			const FGameplayTagContainer InteractionTags = InteractableComponent->GetInteractableData()->GetInteractionTags();
 			for (const FGameplayTag InteractionTag : InteractionTags)
@@ -178,38 +208,29 @@ void UXInUInteractComponent::UpdateInteractableStatus_Local(AActor* Interactable
 				GetInteractInterface()->Execute_CanInteract(GetOwner(), Interactable, InteractionTag, InteractionStatus);
 				if (InteractionStatus.IsValid())
 				{
-					InteractableComponent->AddEntryToInteractionWidget(InteractionTag, InteractionStatus);
+					FXInUInteractionType Interaction;
+					Interaction.InteractionStatus = InteractionStatus;
+					Interaction.InteractionTag = InteractionTag;
+					InteractionInfo.Interactions.Add(Interaction);
 				}
 			}
-			InteractableComponent->ShowInteractionWidget(true);
 		}
-		// if not selected and show default
-		else if (InteractableComponent->GetUnselectedBehaviour() == EXInUInteractableUnselectedBehaviour::XInUIUB_ShowDefault)
-		{
-			InteractableComponent->AddDefaultEntryToInteractionWidget();
-			InteractableComponent->ShowInteractionWidget(true);
-		}
-		// if not selected and show none
-		else if (InteractableComponent->GetUnselectedBehaviour() == EXInUInteractableUnselectedBehaviour::XInUIUB_ShowNone)
-		{
-			InteractableComponent->ShowInteractionWidget(false);
-		}
-	}
-	// not in range or has no interactable data
-	else
-	{
-		InteractableComponent->ShowInteractionWidget(false);
+		// else we show default, which means that we do not pass any interactions in InteractionInfo
+
+		InteractableComponent->AddInteractionEntry(InteractionInfo);
+		InteractableComponent->ShowInteractionWidget(true);
+		AddInteractionEntry(InteractionInfo);
 	}
 }
 
-void UXInUInteractComponent::OnInteractableAvailabilityChanged(AActor* Interactable, bool bAvailable)
+void UXInUInteractComponent::OnInteractableAvailabilityChanged(AActor* Interactable, const bool bAvailable)
 {
 	if (!Interactable) return;
 
 	IXInUInteractableInterface* InteractableInterface = Cast<IXInUInteractableInterface>(Interactable);
 	if (!InteractableInterface) return;
 	
-	const UXInUInteractableComponent* InteractableComponent = InteractableInterface->GetInteractableComponent();
+	const UXInUInteractableComponent* InteractableComponent = InteractableInterface->Execute_GetInteractableComponent(Interactable);
 	if (!InteractableComponent) return;
 
 	const FGameplayTag InteractionChannel = InteractableComponent->GetInteractionChannelTag();
@@ -220,7 +241,7 @@ void UXInUInteractComponent::OnInteractableAvailabilityChanged(AActor* Interacta
 	{
 		if (DisabledInteractablesInRange.Remove(Interactable) > 0)
 		{
-			InteractablesInRange[InteractionChannel].Interactables.AddUnique(Interactable);
+			AddInteractableToInRangeMap(InteractionChannel, Interactable);
 		}
 	}
 	// if set in unavailable remove from in range array and add to disabled array
@@ -233,7 +254,7 @@ void UXInUInteractComponent::OnInteractableAvailabilityChanged(AActor* Interacta
 	}
 
 	// update status for this interactable
-	if (GetPawn<APawn>() && GetPawn<APawn>()->IsLocallyControlled())
+	if (GetOwner<APawn>() && GetOwner<APawn>()->IsLocallyControlled())
 	{
 		UpdateInteractableStatus_Local(Interactable, Interactable == GetSelectedInteractable(InteractionChannel));
 	}
@@ -246,7 +267,7 @@ void UXInUInteractComponent::AddInteractableInRange(AActor* NewInteractable)
 	IXInUInteractableInterface* InteractableInterface = Cast<IXInUInteractableInterface>(NewInteractable);
 	if (!InteractableInterface) return;
 	
-	const UXInUInteractableComponent* InteractableComponent = InteractableInterface->GetInteractableComponent();
+	UXInUInteractableComponent* InteractableComponent = InteractableInterface->Execute_GetInteractableComponent(NewInteractable);
 	if (!InteractableComponent) return;
 
 	const FGameplayTag InteractionChannel = InteractableComponent->GetInteractionChannelTag();
@@ -257,10 +278,10 @@ void UXInUInteractComponent::AddInteractableInRange(AActor* NewInteractable)
 	// if available for interaction, add to in range array and update local status for this actor
 	if (InteractableComponent->GetAvailableForInteraction())
 	{
-		InteractablesInRange[InteractionChannel].Interactables.AddUnique(NewInteractable);
+		AddInteractableToInRangeMap(InteractionChannel, NewInteractable);
 
 		// update status for this interactable
-		if (GetPawn<APawn>() && GetPawn<APawn>()->IsLocallyControlled())
+		if (GetOwner<APawn>() && GetOwner<APawn>()->IsLocallyControlled())
 		{
 			UpdateInteractableStatus_Local(NewInteractable, false);
 		}
@@ -279,7 +300,7 @@ void UXInUInteractComponent::RemoveInteractableInRange(AActor* NewInteractable)
 	IXInUInteractableInterface* InteractableInterface = Cast<IXInUInteractableInterface>(NewInteractable);
 	if (!InteractableInterface) return;
 	
-	UXInUInteractableComponent* InteractableComponent = InteractableInterface->GetInteractableComponent();
+	UXInUInteractableComponent* InteractableComponent = InteractableInterface->Execute_GetInteractableComponent(NewInteractable);
 	if (!InteractableComponent) return;
 
 	const FGameplayTag InteractionChannel = InteractableComponent->GetInteractionChannelTag();
@@ -295,7 +316,7 @@ void UXInUInteractComponent::RemoveInteractableInRange(AActor* NewInteractable)
 	if (bWasAvailable)
 	{
 		// update status for this interactable
-		if (GetPawn<APawn>() && GetPawn<APawn>()->IsLocallyControlled())
+		if (GetOwner<APawn>() && GetOwner<APawn>()->IsLocallyControlled())
 		{
 			UpdateInteractableStatus_Local(NewInteractable, false);
 		}
@@ -306,7 +327,7 @@ void UXInUInteractComponent::InputInteract(const FGameplayTag InteractionChannel
 {
 	Interact(GetSelectedInteractable(InteractionChannel), InteractionChannel, InteractionChannel);
 	
-	if (!HasAuthority())
+	if (GetOwner() && !GetOwner()->HasAuthority())
 	{
 		ServerInteractRPC(GetSelectedInteractable(InteractionChannel), InteractionChannel, InteractionChannel);
 	}
@@ -332,12 +353,12 @@ void UXInUInteractComponent::Interact(AActor* Interactable, const FGameplayTag I
 	// NOTE: im setting to null instead of just returning, cause the result might differ from client to server.
 	// this way, for example, if client predicts an equip weapon function, the server can override equipping nullptr.
 	
-	if (GetInteractInterface())
+	if (IXInUInteractInterface* InteractInterface = GetInteractInterface())
 	{
 		FGameplayTag InteractionStatus;
-		if (GetInteractInterface()->Execute_CanInteract(GetOwner(), Interactable, InteractionTag, InteractionStatus))
+		if (InteractInterface->Execute_CanInteract(GetOwner(), Interactable, InteractionTag, InteractionStatus))
 		{
-			GetInteractInterface()->Execute_TryInteract(GetOwner(), Interactable, InteractionTag);
+			InteractInterface->Execute_TryInteract(GetOwner(), Interactable, InteractionTag);
 		}
 	}
 }
