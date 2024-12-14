@@ -11,9 +11,8 @@
 UENUM(BlueprintType)
 enum class EXInUInteractableUnselectedBehaviour : uint8
 {
-	XInUIUB_ShowInteractions UMETA(DisplayName = "Show Interactions"),
-	XInUIUB_ShowDefault UMETA(DisplayName = "Show Default"),
-	XInUIUB_ShowNone UMETA(DisplayName = "Don't Show"),
+	EUB_ComputeInteractions UMETA(DisplayName = "Compute Interactions"),
+	EUB_SkipInteractions UMETA(DisplayName = "Skip Interactions"),
 };
 
 

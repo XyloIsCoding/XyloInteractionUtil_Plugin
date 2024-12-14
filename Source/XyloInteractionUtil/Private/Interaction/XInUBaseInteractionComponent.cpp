@@ -4,7 +4,6 @@
 #include "Interaction/XInUBaseInteractionComponent.h"
 
 #include "GameplayTagContainer.h"
-#include "Blueprint/UserWidget.h"
 
 // Sets default values for this component's properties
 UXInUBaseInteractionComponent::UXInUBaseInteractionComponent(const FObjectInitializer& ObjectInitializer)
@@ -34,19 +33,14 @@ void UXInUBaseInteractionComponent::BeginPlay()
 /*--------------------------------------------------------------------------------------------------------------------*/
 /* InteractionWidget */
 
-void UXInUBaseInteractionComponent::ShowInteractionWidget(const bool bShow)
+void UXInUBaseInteractionComponent::ResetInteractionEntries(const FGameplayTag InteractionChannel, AActor* Interactable)
 {
-	ShowInteractionWidgetDelegate.Broadcast(bShow);
+	ResetInteractionEntriesDelegate.Broadcast(InteractionChannel, Interactable);
 }
 
-void UXInUBaseInteractionComponent::ResetInteractionEntries(const FGameplayTag InteractionChannel)
+void UXInUBaseInteractionComponent::UpdateInteractionEntries(const FXInUInteractionInfo& InteractionInfo)
 {
-	ResetInteractionEntriesDelegate.Broadcast(InteractionChannel);
-}
-
-void UXInUBaseInteractionComponent::AddInteractionEntry(const FXInUInteractionInfo& InteractionInfo)
-{
-	AddInteractionEntryDelegate.Broadcast(InteractionInfo);
+	UpdateInteractionEntriesDelegate.Broadcast(InteractionInfo);
 }
 
 /*--------------------------------------------------------------------------------------------------------------------*/

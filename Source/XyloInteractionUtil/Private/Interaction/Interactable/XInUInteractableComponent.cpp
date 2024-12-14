@@ -15,7 +15,7 @@ UXInUInteractableComponent::UXInUInteractableComponent()
 	SetIsReplicatedByDefault(true);
 
 	bAvailableForInteraction = true;
-	UnselectedBehaviour = EXInUInteractableUnselectedBehaviour::XInUIUB_ShowDefault;
+	UnselectedBehaviour = EXInUInteractableUnselectedBehaviour::EUB_SkipInteractions;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

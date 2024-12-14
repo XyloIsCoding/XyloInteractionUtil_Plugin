@@ -8,33 +8,10 @@
 #include "XInUBaseInteractionComponent.generated.h"
 
 
-USTRUCT(BlueprintType)
-struct FXInUInteractionType
-{
-	GENERATED_BODY()
+struct FXInUInteractionInfo;
 
-	UPROPERTY(BlueprintReadWrite)
-	FGameplayTag InteractionTag;
-	UPROPERTY(BlueprintReadWrite)
-	FGameplayTag InteractionStatus;
-};
-
-USTRUCT(BlueprintType)
-struct FXInUInteractionInfo
-{
-	GENERATED_BODY()
-
-	UPROPERTY(BlueprintReadWrite)
-	AActor* Interactable;
-	UPROPERTY(BlueprintReadWrite)
-	FGameplayTag InteractionChannel;
-	UPROPERTY(BlueprintReadWrite)
-	TArray<FXInUInteractionType> Interactions;
-};
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FShowInteractionWidgetSignature, const bool, ShowInteractionWidget);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAddInteractionEntrySignature, const FXInUInteractionInfo&, InteractionInfo);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FResetInteractionEntriesSignature, const FGameplayTag, InteractionChannel);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FUpdateInteractionEntriesSignature, const FXInUInteractionInfo&,  InteractionInfo);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FResetInteractionEntriesSignature, const FGameplayTag, InteractionChannel, AActor*, Interactable);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class XYLOINTERACTIONUTIL_API UXInUBaseInteractionComponent : public UActorComponent
@@ -63,20 +40,15 @@ protected:
 	/* InteractionWidget */
 	
 public:
-	/** Broadcasts ShowInteractionWidgetDelegate */
-	virtual void ShowInteractionWidget(const bool bShow);
 	/** Broadcasts ResetInteractionWidgetDelegate */
-	virtual void ResetInteractionEntries(const FGameplayTag InteractionChannel);
+	virtual void ResetInteractionEntries(const FGameplayTag InteractionChannel, AActor* Interactable);
 	/** Broadcasts AddEntryToInteractionWidgetDelegate with interaction widget */
-	virtual void AddInteractionEntry(const FXInUInteractionInfo& InteractionInfo);
+	virtual void UpdateInteractionEntries(const FXInUInteractionInfo& InteractionInfo);
 
 public:
-	/** Used to bind function to show/hide the interaction widget */
-	UPROPERTY(BlueprintAssignable, Category = "Interaction")
-	FShowInteractionWidgetSignature ShowInteractionWidgetDelegate;
 	/** Used to bind function to add interaction widget rows to the interaction widget */
 	UPROPERTY(BlueprintAssignable, Category = "Interaction")
-	FAddInteractionEntrySignature AddInteractionEntryDelegate;
+	FUpdateInteractionEntriesSignature UpdateInteractionEntriesDelegate;
 	/** Used to bind function to remove all widget rows from the interaction widget */
 	UPROPERTY(BlueprintAssignable, Category = "Interaction")
 	FResetInteractionEntriesSignature ResetInteractionEntriesDelegate;

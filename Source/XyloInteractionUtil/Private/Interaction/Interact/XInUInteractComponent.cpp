@@ -3,6 +3,7 @@
 
 #include "Interaction/Interact/XInUInteractComponent.h"
 
+#include "Interaction/XInUInteractionInfo.h"
 #include "Interaction/Interactable/XInUInteractableComponent.h"
 #include "Interaction/Interactable/Data/XInUInteractableData.h"
 #include "Interaction/Interactable/XInUInteractableInterface.h"
@@ -174,53 +175,41 @@ void UXInUInteractComponent::UpdateInteractableStatus_Local(AActor* Interactable
 	const FGameplayTag InteractionChannel = InteractableComponent->GetInteractionChannelTag();
 	if (!InteractionChannel.IsValid()) return;
 	
-	// reset
-	InteractableComponent->ResetInteractionEntries(InteractionChannel);
-	ResetInteractionEntries(InteractionChannel);
-
-	// not in range or has no interactable data
+	// if has no interactable data or not in range, then reset and return
 	const UXInUInteractableData* InteractableData = InteractableComponent->GetInteractableData();
-	if (!Interactable || !IsInteractableInRange(InteractionChannel, Interactable))
+	if (!InteractableData || !IsInteractableInRange(InteractionChannel, Interactable))
 	{
-		InteractableComponent->ShowInteractionWidget(false);
+		InteractableComponent->ResetInteractionEntries(InteractionChannel, Interactable);
+		ResetInteractionEntries(InteractionChannel, Interactable);
 		return;
 	}
-	
-	if (!bSelected && InteractableComponent->GetUnselectedBehaviour() == EXInUInteractableUnselectedBehaviour::XInUIUB_ShowNone)
-	{
-		// if not selected and show none
-		InteractableComponent->ShowInteractionWidget(false);
-	}
-	else // selected or unselected and (show default, or show interactions)
-	{
-		FXInUInteractionInfo InteractionInfo;
-		InteractionInfo.Interactable = Interactable;
-		InteractionInfo.InteractionChannel = InteractionChannel;
 
-		if (bSelected || InteractableComponent->GetUnselectedBehaviour() == EXInUInteractableUnselectedBehaviour::XInUIUB_ShowInteractions)
+	FXInUInteractionInfo InteractionInfo;
+	InteractionInfo.Interactable = Interactable;
+	InteractionInfo.InteractionChannel = InteractionChannel;
+	InteractionInfo.bSelected = bSelected;
+
+	// if selected, or unselected behaviour is to compute interactions
+	// Get all interaction tags from actor's InteractableData, and generate the status for each
+	if (bSelected || InteractableComponent->GetUnselectedBehaviour() == EXInUInteractableUnselectedBehaviour::EUB_ComputeInteractions)
+	{
+		const FGameplayTagContainer InteractionTags = InteractableComponent->GetInteractableData()->GetInteractionTags();
+		for (const FGameplayTag InteractionTag : InteractionTags)
 		{
-			// if selected, or unselected behaviour is to show interaction data
-			// Get all interaction tags from actor's InteractableData, and generate the status for each to update interaction widget
-			const FGameplayTagContainer InteractionTags = InteractableComponent->GetInteractableData()->GetInteractionTags();
-			for (const FGameplayTag InteractionTag : InteractionTags)
+			FGameplayTag InteractionStatus;
+			GetInteractInterface()->Execute_CanInteract(GetOwner(), Interactable, InteractionTag, InteractionStatus);
+			if (InteractionStatus.IsValid())
 			{
-				FGameplayTag InteractionStatus;
-				GetInteractInterface()->Execute_CanInteract(GetOwner(), Interactable, InteractionTag, InteractionStatus);
-				if (InteractionStatus.IsValid())
-				{
-					FXInUInteractionType Interaction;
-					Interaction.InteractionStatus = InteractionStatus;
-					Interaction.InteractionTag = InteractionTag;
-					InteractionInfo.Interactions.Add(Interaction);
-				}
+				FXInUInteractionType Interaction;
+				Interaction.InteractionStatus = InteractionStatus;
+				Interaction.InteractionTag = InteractionTag;
+				InteractionInfo.Interactions.Add(Interaction);
 			}
 		}
-		// else we show default, which means that we do not pass any interactions in InteractionInfo
-
-		InteractableComponent->AddInteractionEntry(InteractionInfo);
-		InteractableComponent->ShowInteractionWidget(true);
-		AddInteractionEntry(InteractionInfo);
 	}
+
+	InteractableComponent->UpdateInteractionEntries(InteractionInfo);
+	UpdateInteractionEntries(InteractionInfo);
 }
 
 void UXInUInteractComponent::OnInteractableAvailabilityChanged(AActor* Interactable, const bool bAvailable)

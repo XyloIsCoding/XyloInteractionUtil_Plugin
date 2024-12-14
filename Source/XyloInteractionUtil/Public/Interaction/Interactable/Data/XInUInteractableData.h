@@ -8,34 +8,6 @@
 #include "XInUInteractableData.generated.h"
 
 
-struct FXInUInteractionInfo;
-enum class EXInUInteractableStatus : uint8;
-
-USTRUCT(BlueprintType)
-struct FXInUInteractionStatusDataRow
-{
-	GENERATED_BODY()
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	FGameplayTag InteractionStatusTag;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TSubclassOf<UUserWidget> InteractionWidgetClass;
-};
-
-USTRUCT(BlueprintType)
-struct FXInUInteractionDataRow
-{
-	GENERATED_BODY()
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	FGameplayTag InteractionTag;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TArray<FXInUInteractionStatusDataRow> StatusData;
-};
-
-
 /**
  * 
  */
@@ -49,15 +21,8 @@ public:
 	FGameplayTag InteractionChannelTag;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TSubclassOf<UUserWidget> DefaultInteractionWidgetClass;
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TArray<FXInUInteractionDataRow> InteractionRows;
+	FGameplayTagContainer PossibleInteractions;
 
 	UFUNCTION(BlueprintCallable, Category = "Interaction")
 	FGameplayTagContainer GetInteractionTags();
-	
-	UFUNCTION(BlueprintCallable, Category = "Interaction")
-	TSubclassOf<UUserWidget> GetInteractionWidgetClass(const FGameplayTag InteractionTag, const FGameplayTag InteractionStatusTag) const;
-	
 };
