@@ -7,6 +7,18 @@
 #include "Engine/DataAsset.h"
 #include "XInUInteractableData.generated.h"
 
+USTRUCT(BlueprintType)
+struct FXInUInteractionData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	FGameplayTag InteractionTag;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	float InteractionTime;
+};
+
 
 /**
  * 
@@ -21,8 +33,10 @@ public:
 	FGameplayTag InteractionChannelTag;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	FGameplayTagContainer PossibleInteractions;
+	TArray<FXInUInteractionData> PossibleInteractions;
 
 	UFUNCTION(BlueprintCallable, Category = "Interaction")
-	FGameplayTagContainer GetInteractionTags();
+	const TArray<FXInUInteractionData>& GetPossibleInteractions();
+
+	bool GetInteractionData(const FGameplayTag InteractionTag, FXInUInteractionData& OutInteractionData);
 };

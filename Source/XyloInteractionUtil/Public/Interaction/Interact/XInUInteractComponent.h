@@ -76,25 +76,49 @@ protected:
 	 * Is also called by RefreshAllInteractableStatus_Local and UpdateSelectedInteractable_Local */
 	virtual void UpdateInteractableStatus_Local(AActor* Interactable, const bool bSelected = false);
 
-protected:
-	/** Bound to Interactable::AvailableForInteractionDelegate on both client and server */
-	UFUNCTION()
-	virtual void OnInteractableAvailabilityChanged(AActor* Interactable, const bool bAvailable);
 public:
 	/** Add an interactable actor to the in range list. Should be called both on client and server */
 	virtual void AddInteractableInRange(AActor* NewInteractable);
 	/** Remove an interactable actor from the in range list. Should be called both on client and server */
 	virtual void RemoveInteractableInRange(AActor* NewInteractable);
+protected:
+	/** Bound to Interactable::AvailableForInteractionDelegate on both client and server */
+	UFUNCTION()
+	virtual void OnInteractableAvailabilityChanged(AActor* Interactable, const bool bAvailable);
 
+public:
 	/** Function to call to start an interaction. should be called from locally controlled actors.
 	 * (Calls ExecuteInteraction, and if not authority calls ServerInteractRPC) */
 	UFUNCTION(BlueprintCallable, Category = "Interaction")
-	virtual void InputInteract(const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag);
+	virtual void InputStartInteraction(const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag);
+	UFUNCTION(BlueprintCallable, Category = "Interaction")
+	virtual void InputStopInteraction(const FGameplayTag InteractionChannel);
+protected:
 	UFUNCTION(Server, Reliable)
-	/** Calls ExecuteInteraction */
-	virtual void ServerInteractRPC(AActor* Interactable, const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag);
+	virtual void ServerStartInteractionRPC(AActor* Interactable, const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag);
+	UFUNCTION(Server, Reliable)
+	virtual void ServerStopInteractionRPC(const FGameplayTag InteractionChannel);
+	
+	virtual void StartInteraction(AActor* Interactable, const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag);
+	virtual void StopInteraction(const FGameplayTag InteractionChannel);
+	
+	virtual float GetInteractionTime(AActor* Interactable, const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag);
 	virtual void Interact(AActor* Interactable, const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag);
 
+protected:
+	virtual void StartInteractionTimer(AActor* Interactable, const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag, const float Timer);
+	virtual void StopInteractionTimer(const FGameplayTag InteractionChannel);
+	virtual void InteractionTimerEnded(AActor* Interactable, const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag);
+
+	UFUNCTION(BlueprintCallable, Category = "Interaction")
+	virtual float GetInteractionMaxTime(const FGameplayTag InteractionChannel);
+	UFUNCTION(BlueprintCallable, Category = "Interaction")
+	virtual float GetInteractionTimeElapsed(const FGameplayTag InteractionChannel);
+	UFUNCTION(BlueprintCallable, Category = "Interaction")
+	virtual float GetInteractionTimeLeft(const FGameplayTag InteractionChannel);
+private:
+	TMap<FGameplayTag, FTimerHandle> InteractionTimer;
+	
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
