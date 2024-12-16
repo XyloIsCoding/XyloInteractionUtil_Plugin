@@ -46,10 +46,10 @@ public:
 	virtual void UpdateInteractionEntries(const FXInUInteractionInfo& InteractionInfo);
 
 public:
-	/** Used to bind function to add interaction widget rows to the interaction widget */
+	/** Broadcast when interactions are updated for an in-range interactable */
 	UPROPERTY(BlueprintAssignable, Category = "Interaction")
 	FUpdateInteractionEntriesSignature UpdateInteractionEntriesDelegate;
-	/** Used to bind function to remove all widget rows from the interaction widget */
+	/** Broadcast when an interactable gets out of range */
 	UPROPERTY(BlueprintAssignable, Category = "Interaction")
 	FResetInteractionEntriesSignature ResetInteractionEntriesDelegate;
 
