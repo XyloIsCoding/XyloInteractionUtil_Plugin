@@ -6,7 +6,10 @@
 #include "GameplayTagContainer.h"
 #include "Components/ActorComponent.h"
 #include "Interaction/XInUBaseInteractionComponent.h"
+#include "Interaction/XInUInteractionInfo.h"
 #include "XInUInteractableComponent.generated.h"
+
+struct FXInUInteractionTimerData;
 
 UENUM(BlueprintType)
 enum class EXInUInteractableUnselectedBehaviour : uint8
@@ -83,5 +86,28 @@ public:
 	 * Checks if the actor has an interact component, if so, removes this actor from its inRange list */
 	UFUNCTION(BlueprintCallable, Category = "Interaction") 
 	virtual void OnExitInteractRange(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+	/* InteractionInfoDelegates */
+
+public:
+	virtual void ResetInteractionEntries(const FGameplayTag InteractionChannel, AActor* Interactable) override;
+	virtual void UpdateInteractionEntries(const FXInUInteractionInfo& InteractionInfo) override;
+	
+/*--------------------------------------------------------------------------------------------------------------------*/
+	
+/*--------------------------------------------------------------------------------------------------------------------*/
+	/* Interaction Timer */
+
+public:
+	virtual float GetInteractionMaxTime(const FGameplayTag InteractionChannel) override;
+	virtual float GetInteractionTimeElapsed(const FGameplayTag InteractionChannel) override;
+	virtual float GetInteractionTimeLeft(const FGameplayTag InteractionChannel) override;
+	virtual void UpdateInteractionTimerData(const FXInUInteractionTimerData& NewInteractionTimer);
+	virtual void ResetInteractionTimerData();
+private:
+	FXInUInteractionTimerData InteractionTimer;
+
+/*--------------------------------------------------------------------------------------------------------------------*/
 	
 };

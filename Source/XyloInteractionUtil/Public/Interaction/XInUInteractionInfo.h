@@ -29,3 +29,16 @@ struct FXInUInteractionInfo
 	UPROPERTY(BlueprintReadWrite)
 	TArray<FXInUInteractionType> Interactions;
 };
+
+USTRUCT(BlueprintType)
+struct FXInUInteractionTimerData
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadWrite)
+	FGameplayTag InteractionTag;
+	UPROPERTY(BlueprintReadWrite)
+	float StartTime = -1.f;
+	UPROPERTY(BlueprintReadWrite)
+	float Duration = -1.f;
+};

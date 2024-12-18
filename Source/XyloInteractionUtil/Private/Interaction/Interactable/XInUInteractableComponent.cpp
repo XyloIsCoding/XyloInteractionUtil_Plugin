@@ -4,6 +4,7 @@
 #include "Interaction/Interactable/XInUInteractableComponent.h"
 
 #include "Blueprint/UserWidget.h"
+#include "Interaction/XInUInteractionInfo.h"
 #include "Interaction/Interactable/Data/XInUInteractableData.h"
 #include "Interaction/Interact/XInUInteractComponent.h"
 #include "Interaction/Interact/XInUInteractInterface.h"
@@ -88,3 +89,65 @@ void UXInUInteractableComponent::OnExitInteractRange(UPrimitiveComponent* Overla
 		}
 	}
 }
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+/* InteractionInfoDelegates */
+
+void UXInUInteractableComponent::ResetInteractionEntries(const FGameplayTag InteractionChannel, AActor* Interactable)
+{
+	Super::ResetInteractionEntries(InteractionChannel, Interactable);
+	ResetInteractionTimerData();
+}
+
+void UXInUInteractableComponent::UpdateInteractionEntries(const FXInUInteractionInfo& InteractionInfo)
+{
+	Super::UpdateInteractionEntries(InteractionInfo);
+	if (!InteractionInfo.bSelected)
+	{
+		ResetInteractionTimerData();
+	}
+}
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+/* Interaction Timer */
+
+float UXInUInteractableComponent::GetInteractionMaxTime(const FGameplayTag InteractionChannel)
+{
+	return InteractionTimer.Duration;
+}
+
+float UXInUInteractableComponent::GetInteractionTimeElapsed(const FGameplayTag InteractionChannel)
+{
+	if (InteractionTimer.StartTime >= 0.f)
+	{
+		return GetWorld()->GetTimeSeconds() - InteractionTimer.StartTime;
+	}
+	return -1.f;
+}
+
+float UXInUInteractableComponent::GetInteractionTimeLeft(const FGameplayTag InteractionChannel)
+{
+	if (InteractionTimer.StartTime >= 0.f && InteractionTimer.Duration >= 0.f)
+	{
+		return FMath::Max((InteractionTimer.StartTime + InteractionTimer.Duration) - GetWorld()->GetTimeSeconds(), 0.f);
+	}
+	return -1.f;
+}
+
+void UXInUInteractableComponent::UpdateInteractionTimerData(const FXInUInteractionTimerData& NewInteractionTimer)
+{
+	InteractionTimer.InteractionTag = NewInteractionTimer.InteractionTag;
+	InteractionTimer.StartTime = NewInteractionTimer.StartTime;
+	InteractionTimer.Duration = NewInteractionTimer.Duration;
+}
+
+void UXInUInteractableComponent::ResetInteractionTimerData()
+{
+	InteractionTimer.StartTime = -1.f;
+	InteractionTimer.Duration = -1.f;
+}
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+

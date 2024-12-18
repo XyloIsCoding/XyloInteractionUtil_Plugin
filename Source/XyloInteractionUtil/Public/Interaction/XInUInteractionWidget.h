@@ -45,7 +45,7 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "Interaction Widget", meta = (DisplayName = "Interaction Component Set"))
 	void BP_InteractionComponentSet();
 private:
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly, Category = "Interaction Widget", meta = (AllowPrivateAccess))
 	TObjectPtr<UXInUBaseInteractionComponent> InteractionComponent;
 
 /*--------------------------------------------------------------------------------------------------------------------*/

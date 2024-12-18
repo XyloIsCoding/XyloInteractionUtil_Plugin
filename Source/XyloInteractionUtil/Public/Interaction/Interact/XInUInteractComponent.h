@@ -3,11 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Components/PawnComponent.h"
 #include "Interaction/XInUBaseInteractionComponent.h"
 #include "XInUInteractComponent.generated.h"
 
 
+class UXInUInteractableComponent;
 class IXInUInteractInterface;
 struct FGameplayTag;
 
@@ -48,7 +48,9 @@ public:
 	 */
 
 protected:
-	IXInUInteractInterface* GetInteractInterface();
+	virtual IXInUInteractInterface* GetInteractInterface();
+	virtual UXInUInteractableComponent* GetInteractableComponent(AActor* Interactable);
+	virtual UXInUInteractableComponent* GetAvailableInteractableComponent(const FGameplayTag InteractionChannel, AActor* Interactable);
 
 protected:
 	virtual void SetSelectedInteractable(const FGameplayTag InteractionChannel, AActor* NewInteractable);
@@ -56,6 +58,7 @@ protected:
 	virtual bool IsInteractableInRange(const FGameplayTag InteractionChannel, const AActor* Interactable) const;
 	virtual int32 RemoveInteractableFromInRangeMap(const FGameplayTag InteractionChannel, AActor* Interactable);
 	virtual int32 AddInteractableToInRangeMap(const FGameplayTag InteractionChannel, AActor* Interactable);
+	virtual bool IsInteractableSelected(const FGameplayTag InteractionChannel, const AActor* Interactable) const;
 private:
 	/** List on interactable actors in range, is updated by AddInteractableInRange and RemoveInteractableInRange */
 	UPROPERTY()
@@ -86,6 +89,9 @@ protected:
 	UFUNCTION()
 	virtual void OnInteractableAvailabilityChanged(AActor* Interactable, const bool bAvailable);
 
+/*--------------------------------------------------------------------------------------------------------------------*/
+	/* Interaction */
+	
 public:
 	/** Function to call to start an interaction. should be called from locally controlled actors.
 	 * (Calls ExecuteInteraction, and if not authority calls ServerInteractRPC) */
@@ -104,22 +110,28 @@ protected:
 	
 	virtual float GetInteractionTime(AActor* Interactable, const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag);
 	virtual void Interact(AActor* Interactable, const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag);
+	virtual void InteractFromTimer(AActor* Interactable, const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag);
 
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+	/* Interaction Timer */
+	
 protected:
 	virtual void StartInteractionTimer(AActor* Interactable, const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag, const float Timer);
 	virtual void StopInteractionTimer(const FGameplayTag InteractionChannel);
 	virtual void InteractionTimerEnded(AActor* Interactable, const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag);
-
-	UFUNCTION(BlueprintCallable, Category = "Interaction")
-	virtual float GetInteractionMaxTime(const FGameplayTag InteractionChannel);
-	UFUNCTION(BlueprintCallable, Category = "Interaction")
-	virtual float GetInteractionTimeElapsed(const FGameplayTag InteractionChannel);
-	UFUNCTION(BlueprintCallable, Category = "Interaction")
-	virtual float GetInteractionTimeLeft(const FGameplayTag InteractionChannel);
-private:
-	TMap<FGameplayTag, FTimerHandle> InteractionTimer;
 	
+	virtual float GetInteractionMaxTime(const FGameplayTag InteractionChannel) override;
+	virtual float GetInteractionTimeElapsed(const FGameplayTag InteractionChannel) override;
+	virtual float GetInteractionTimeLeft(const FGameplayTag InteractionChannel) override;
+private:
+	/** Maps the interaction channel tag to a timer handle (the timer delegate already has data about the
+	 * interactable and interaction tag, so we just use a timer handle per channel) */
+	TMap<FGameplayTag, FTimerHandle> InteractionTimer;
 
+/*--------------------------------------------------------------------------------------------------------------------*/
+	
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	/*

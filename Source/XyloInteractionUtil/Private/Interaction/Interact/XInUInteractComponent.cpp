@@ -72,6 +72,27 @@ IXInUInteractInterface* UXInUInteractComponent::GetInteractInterface()
 	return GetOwner<IXInUInteractInterface>();
 }
 
+UXInUInteractableComponent* UXInUInteractComponent::GetInteractableComponent(AActor* Interactable)
+{
+	if (!Interactable) return nullptr;
+	
+	IXInUInteractableInterface* InteractableInterface = Cast<IXInUInteractableInterface>(Interactable);
+	if (!InteractableInterface) return nullptr;
+	
+	return InteractableInterface->Execute_GetInteractableComponent(Interactable);
+}
+
+UXInUInteractableComponent* UXInUInteractComponent::GetAvailableInteractableComponent(const FGameplayTag InteractionChannel, AActor* Interactable)
+{
+	UXInUInteractableComponent* InteractableComponent = GetInteractableComponent(Interactable);
+	if (!InteractableComponent) return nullptr;
+	
+	if (!IsInteractableSelected(InteractionChannel, Interactable)) return nullptr;
+	if (!InteractableComponent->GetAvailableForInteraction()) return nullptr;
+
+	return InteractableComponent;
+}
+
 void UXInUInteractComponent::SetSelectedInteractable(const FGameplayTag InteractionChannel, AActor* NewInteractable)
 {
 	if (!SelectedInteractable.Contains(InteractionChannel))
@@ -108,6 +129,11 @@ int32 UXInUInteractComponent::AddInteractableToInRangeMap(const FGameplayTag Int
 		InteractablesInRange.Emplace(InteractionChannel, FXInUInteractablesContainer());
 	}
 	return InteractablesInRange[InteractionChannel].Interactables.AddUnique(Interactable);
+}
+
+bool UXInUInteractComponent::IsInteractableSelected(const FGameplayTag InteractionChannel, const AActor* Interactable) const
+{
+	return SelectedInteractable.Contains(InteractionChannel) && SelectedInteractable[InteractionChannel] == Interactable;
 }
 
 void UXInUInteractComponent::RefreshAllInteractableStatus_Local()
@@ -164,16 +190,17 @@ void UXInUInteractComponent::UpdateSelectedInteractable_Local()
 
 void UXInUInteractComponent::UpdateInteractableStatus_Local(AActor* Interactable, const bool bSelected)
 {
-	if (!Interactable) return;
-
-	IXInUInteractableInterface* InteractableInterface = Cast<IXInUInteractableInterface>(Interactable);
-	if (!InteractableInterface) return;
-	
-	UXInUInteractableComponent* InteractableComponent = InteractableInterface->Execute_GetInteractableComponent(Interactable);
+	UXInUInteractableComponent* InteractableComponent = GetInteractableComponent(Interactable);
 	if (!InteractableComponent) return;
 
 	const FGameplayTag InteractionChannel = InteractableComponent->GetInteractionChannelTag();
 	if (!InteractionChannel.IsValid()) return;
+
+	// stop interaction if we were interacting with this actor and now it is no longer selected
+	if (!bSelected && GetInteractionTimeLeft(InteractionChannel) >= 0.f)
+	{
+		InputStopInteraction(InteractionChannel);
+	}
 	
 	// if has no interactable data or not in range, then reset and return
 	const UXInUInteractableData* InteractableData = InteractableComponent->GetInteractableData();
@@ -214,12 +241,7 @@ void UXInUInteractComponent::UpdateInteractableStatus_Local(AActor* Interactable
 
 void UXInUInteractComponent::AddInteractableInRange(AActor* NewInteractable)
 {
-	if (!NewInteractable) return;
-
-	IXInUInteractableInterface* InteractableInterface = Cast<IXInUInteractableInterface>(NewInteractable);
-	if (!InteractableInterface) return;
-	
-	UXInUInteractableComponent* InteractableComponent = InteractableInterface->Execute_GetInteractableComponent(NewInteractable);
+	UXInUInteractableComponent* InteractableComponent = GetInteractableComponent(NewInteractable);
 	if (!InteractableComponent) return;
 
 	const FGameplayTag InteractionChannel = InteractableComponent->GetInteractionChannelTag();
@@ -247,12 +269,7 @@ void UXInUInteractComponent::AddInteractableInRange(AActor* NewInteractable)
 
 void UXInUInteractComponent::RemoveInteractableInRange(AActor* NewInteractable)
 {
-	if (!NewInteractable) return;
-
-	IXInUInteractableInterface* InteractableInterface = Cast<IXInUInteractableInterface>(NewInteractable);
-	if (!InteractableInterface) return;
-	
-	UXInUInteractableComponent* InteractableComponent = InteractableInterface->Execute_GetInteractableComponent(NewInteractable);
+	UXInUInteractableComponent* InteractableComponent = GetInteractableComponent(NewInteractable);
 	if (!InteractableComponent) return;
 
 	const FGameplayTag InteractionChannel = InteractableComponent->GetInteractionChannelTag();
@@ -277,12 +294,7 @@ void UXInUInteractComponent::RemoveInteractableInRange(AActor* NewInteractable)
 
 void UXInUInteractComponent::OnInteractableAvailabilityChanged(AActor* Interactable, const bool bAvailable)
 {
-	if (!Interactable) return;
-
-	IXInUInteractableInterface* InteractableInterface = Cast<IXInUInteractableInterface>(Interactable);
-	if (!InteractableInterface) return;
-	
-	const UXInUInteractableComponent* InteractableComponent = InteractableInterface->Execute_GetInteractableComponent(Interactable);
+	UXInUInteractableComponent* InteractableComponent = GetInteractableComponent(Interactable);
 	if (!InteractableComponent) return;
 
 	const FGameplayTag InteractionChannel = InteractableComponent->GetInteractionChannelTag();
@@ -311,6 +323,9 @@ void UXInUInteractComponent::OnInteractableAvailabilityChanged(AActor* Interacta
 		UpdateInteractableStatus_Local(Interactable, Interactable == GetSelectedInteractable(InteractionChannel));
 	}
 }
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+/* Interaction */
 
 void UXInUInteractComponent::InputStartInteraction(const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag)
 {
@@ -354,27 +369,43 @@ void UXInUInteractComponent::StartInteraction(AActor* Interactable, const FGamep
 	else if (InteractionTime > 0.f)
 	{
 		StartInteractionTimer(Interactable, InteractionChannel, InteractionTag, InteractionTime);
+
+		// Passing timer data to interactable
+		if (GetOwner<APawn>() && GetOwner<APawn>()->IsLocallyControlled())
+		{
+			UXInUInteractableComponent* InteractableComponent = GetInteractableComponent(Interactable);
+			if (!InteractableComponent) return;
+
+			FXInUInteractionTimerData InteractionTimerData;
+			InteractionTimerData.InteractionTag = InteractionTag;
+			InteractionTimerData.StartTime = GetWorld()->GetTimeSeconds();
+			InteractionTimerData.Duration = InteractionTime;
+			InteractableComponent->UpdateInteractionTimerData(InteractionTimerData);
+		}
 	}
 }
 
 void UXInUInteractComponent::StopInteraction(const FGameplayTag InteractionChannel)
 {
 	StopInteractionTimer(InteractionChannel);
+
+	// Passing timer data to interactable
+	if (GetOwner<APawn>() && GetOwner<APawn>()->IsLocallyControlled())
+	{
+		if (!SelectedInteractable.Contains(InteractionChannel)) return;
+		UXInUInteractableComponent* InteractableComponent = GetInteractableComponent(SelectedInteractable[InteractionChannel]);
+		if (!InteractableComponent) return;
+		
+		InteractableComponent->ResetInteractionTimerData();
+	}
 }
 
 float UXInUInteractComponent::GetInteractionTime(AActor* Interactable, const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag)
 {
 	float InteractionTime = -1.f;
-	
-	if (!IsInteractableInRange(InteractionChannel, Interactable)) return InteractionTime;
 
-	IXInUInteractableInterface* InteractableInterface = Cast<IXInUInteractableInterface>(Interactable);
-	if (!InteractableInterface) return InteractionTime;
-
-	UXInUInteractableComponent* InteractableComponent = InteractableInterface->Execute_GetInteractableComponent(Interactable);
+	UXInUInteractableComponent* InteractableComponent = GetAvailableInteractableComponent(InteractionChannel, SelectedInteractable[InteractionChannel]);
 	if (!InteractableComponent) return InteractionTime;
-	
-	if (!InteractableComponent->GetAvailableForInteraction()) return InteractionTime;
 
 	FXInUInteractionData InteractionData;
 	if (InteractableComponent->GetInteractableData() && InteractableComponent->GetInteractableData()->GetInteractionData(InteractionTag, InteractionData))
@@ -396,6 +427,26 @@ void UXInUInteractComponent::Interact(AActor* Interactable, const FGameplayTag I
 	}
 }
 
+void UXInUInteractComponent::InteractFromTimer(AActor* Interactable, const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag)
+{
+	// since this function is delayed, we check that the interactable is still selected
+	UXInUInteractableComponent* InteractableComponent = GetAvailableInteractableComponent(InteractionChannel, SelectedInteractable[InteractionChannel]);
+	if (!InteractableComponent) return;
+	
+	Interact(Interactable, InteractionChannel, InteractionTag);
+
+	// Passing timer data to interactable
+	if (GetOwner<APawn>() && GetOwner<APawn>()->IsLocallyControlled())
+	{
+		InteractableComponent->ResetInteractionTimerData();
+	}
+}
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+/* Interaction Timer */
+
 void UXInUInteractComponent::StartInteractionTimer(AActor* Interactable, const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag, const float Timer)
 {
 	if (!InteractionTimer.Contains(InteractionChannel))
@@ -416,10 +467,7 @@ void UXInUInteractComponent::StopInteractionTimer(const FGameplayTag Interaction
 
 void UXInUInteractComponent::InteractionTimerEnded(AActor* Interactable, const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag)
 {
-	if (GetInteractionTime(Interactable, InteractionChannel, InteractionTag) >= 0.f)
-	{
-		Interact(Interactable, InteractionChannel, InteractionTag);
-	}
+	InteractFromTimer(Interactable, InteractionChannel, InteractionTag);
 }
 
 float UXInUInteractComponent::GetInteractionMaxTime(const FGameplayTag InteractionChannel)
@@ -448,4 +496,7 @@ float UXInUInteractComponent::GetInteractionTimeLeft(const FGameplayTag Interact
 	}
 	return -1.f;
 }
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+
 
