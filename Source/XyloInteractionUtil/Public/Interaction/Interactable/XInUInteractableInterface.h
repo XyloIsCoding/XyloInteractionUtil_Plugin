@@ -10,7 +10,7 @@ struct FGameplayTag;
 class UXInUInteractableComponent;
 
 // This class does not need to be modified.
-UINTERFACE()
+UINTERFACE(MinimalAPI, BlueprintType)
 class UXInUInteractableInterface : public UInterface
 {
 	GENERATED_BODY()
@@ -26,4 +26,5 @@ class XYLOINTERACTIONUTIL_API IXInUInteractableInterface
 public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interaction")
 	UXInUInteractableComponent* GetInteractableComponent() const;
+	virtual UXInUInteractableComponent* GetInteractableComponent_Implementation() const = 0;
 };
