@@ -25,5 +25,5 @@ class XYLOINTERACTIONUTIL_API IXInUInteractableInterface
 
 public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interaction")
-	UXInUInteractableComponent* GetInteractableComponent();
+	UXInUInteractableComponent* GetInteractableComponent() const;
 };

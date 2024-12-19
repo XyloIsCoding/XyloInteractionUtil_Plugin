@@ -25,7 +25,7 @@ class XYLOINTERACTIONUTIL_API IXInUInteractInterface
 
 public:
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interaction")
-	UXInUInteractComponent* GetInteractComponent();
+	UXInUInteractComponent* GetInteractComponent() const;
 
 	/** Get view location and direction for the locally controlled character */
 	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Interaction")
