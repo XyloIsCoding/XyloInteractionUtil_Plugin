@@ -7,6 +7,7 @@
 #include "XInUInteractComponent.generated.h"
 
 
+struct FXInUInteractionTimerHandle;
 class UXInUInteractableComponent;
 class IXInUInteractInterface;
 struct FGameplayTag;
@@ -44,21 +45,42 @@ public:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	/*
+	 * UXInUBaseInteractionComponent Interface
+	 */
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+	/* Interaction Timer */
+	
+public:
+	/** as of now can only be used on local client. use overload to get on server */
+	virtual float GetDefaultInteractionDurationByTag(const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag) override;
+	virtual float GetInteractionDurationByTag(const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag) override;
+	virtual float GetInteractionTimeElapsedByTag(const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag) override;
+	virtual float GetInteractionTimeLeftByTag(const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag) override;
+
+	/** Overload that can be used on server too */
+	virtual float GetDefaultInteractionDurationByTag(AActor* Interactable, const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag);
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+	
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	/*
 	 * Interact
 	 */
 
 protected:
 	virtual IXInUInteractInterface* GetInteractInterface();
 	virtual UXInUInteractableComponent* GetInteractableComponent(AActor* Interactable);
-	virtual UXInUInteractableComponent* GetAvailableInteractableComponent(const FGameplayTag InteractionChannel, AActor* Interactable);
+	virtual UXInUInteractableComponent* GetAvailableInteractableComponent(AActor* Interactable, const FGameplayTag InteractionChannel);
 
 protected:
-	virtual void SetSelectedInteractable(const FGameplayTag InteractionChannel, AActor* NewInteractable);
-	virtual AActor* GetSelectedInteractable(const FGameplayTag InteractionChannel);
-	virtual bool IsInteractableInRange(const FGameplayTag InteractionChannel, const AActor* Interactable) const;
-	virtual int32 RemoveInteractableFromInRangeMap(const FGameplayTag InteractionChannel, AActor* Interactable);
-	virtual int32 AddInteractableToInRangeMap(const FGameplayTag InteractionChannel, AActor* Interactable);
-	virtual bool IsInteractableSelected(const FGameplayTag InteractionChannel, const AActor* Interactable) const;
+	virtual void SetSelectedInteractable(AActor* NewInteractable, const FGameplayTag InteractionChannel);
+	virtual AActor* GetSelectedInteractable(const FGameplayTag InteractionChannel) const;
+	virtual bool IsInteractableInRange(const AActor* Interactable, const FGameplayTag InteractionChannel) const;
+	virtual int32 RemoveInteractableFromInRangeMap(AActor* Interactable, const FGameplayTag InteractionChannel);
+	virtual int32 AddInteractableToInRangeMap(AActor* Interactable, const FGameplayTag InteractionChannel);
+	virtual bool IsInteractableSelected(const AActor* Interactable, const FGameplayTag InteractionChannel) const;
 private:
 	/** List on interactable actors in range, is updated by AddInteractableInRange and RemoveInteractableInRange */
 	UPROPERTY()
@@ -103,32 +125,39 @@ protected:
 	UFUNCTION(Server, Reliable)
 	virtual void ServerStartInteractionRPC(AActor* Interactable, const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag);
 	UFUNCTION(Server, Reliable)
-	virtual void ServerStopInteractionRPC(const FGameplayTag InteractionChannel);
+	virtual void ServerStopInteractionRPC(AActor* Interactable, const FGameplayTag InteractionChannel);
 	
-	virtual void StartInteraction(AActor* Interactable, const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag);
-	virtual void StopInteraction(const FGameplayTag InteractionChannel);
+	virtual bool StartInteraction(AActor* Interactable, const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag);
+	virtual bool StartInteractionWithDuration(AActor* Interactable, FGameplayTag InteractionChannel, FGameplayTag InteractionTag, const float InteractionTime);
+	virtual void StopInteraction(AActor* Interactable, const FGameplayTag InteractionChannel);
 	
-	virtual float GetInteractionTime(AActor* Interactable, const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag);
 	virtual void Interact(AActor* Interactable, const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag);
 	virtual void InteractFromTimer(AActor* Interactable, const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag);
-
+	UFUNCTION(Server, Reliable)
+	virtual void ServerInteractFromTimerRPC(AActor* Interactable, const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag);
+	
+	
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 	/* Interaction Timer */
 	
 protected:
-	virtual void StartInteractionTimer(AActor* Interactable, const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag, const float Timer);
+	/** @return if a timer is active for this channel */
+	virtual bool HasActiveTimerForChannel(const FGameplayTag InteractionChannel);
+	/** @return pointer to timer handle struct of the active timer for this channel */
+	virtual FXInUInteractionTimerHandle* GetActiveTimerByChannel(const FGameplayTag InteractionChannel);
+	/** @return true if there is a timer active AND it is client only */
+	virtual bool HasClientOnlyTimer(const FGameplayTag InteractionChannel);
+protected:
+	virtual void StartInteractionTimer(AActor* Interactable, const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag, const float Timer, const
+	                                   bool bClientOnly);
 	virtual void StopInteractionTimer(const FGameplayTag InteractionChannel);
-	virtual void InteractionTimerEnded(AActor* Interactable, const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag);
-	
-	virtual float GetInteractionMaxTime(const FGameplayTag InteractionChannel) override;
-	virtual float GetInteractionTimeElapsed(const FGameplayTag InteractionChannel) override;
-	virtual float GetInteractionTimeLeft(const FGameplayTag InteractionChannel) override;
+	virtual void InteractionTimerEnded(AActor* Interactable, const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag, const bool bClientOnly);
 private:
 	/** Maps the interaction channel tag to a timer handle (the timer delegate already has data about the
 	 * interactable and interaction tag, so we just use a timer handle per channel) */
-	TMap<FGameplayTag, FTimerHandle> InteractionTimer;
+	TMap<FGameplayTag, FXInUInteractionTimerHandle> InteractionTimer;
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 	

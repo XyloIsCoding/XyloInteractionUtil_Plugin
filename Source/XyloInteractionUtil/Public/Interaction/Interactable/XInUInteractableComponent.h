@@ -45,6 +45,32 @@ public:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	/*
+	 * UXInUBaseInteractionComponent Interface
+	 */
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+	/* InteractionInfoDelegates */
+
+public:
+	virtual void ResetInteractionEntries(AActor* Interactable, const FGameplayTag InteractionChannel) override;
+	virtual void UpdateInteractionEntries(const FXInUInteractionInfo& InteractionInfo) override;
+	
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+	/* Interaction Timer */
+
+public:
+	virtual float GetDefaultInteractionDurationByTag(const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag) override;
+	virtual float GetInteractionDurationByTag(const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag) override;
+	virtual float GetInteractionTimeElapsedByTag(const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag) override;
+	virtual float GetInteractionTimeLeftByTag(const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag) override;
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+	
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	/*
 	 * Interactable
 	 */
 
@@ -86,23 +112,11 @@ public:
 	 * Checks if the actor has an interact component, if so, removes this actor from its inRange list */
 	UFUNCTION(BlueprintCallable, Category = "Interaction") 
 	virtual void OnExitInteractRange(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
-
-/*--------------------------------------------------------------------------------------------------------------------*/
-	/* InteractionInfoDelegates */
-
-public:
-	virtual void ResetInteractionEntries(const FGameplayTag InteractionChannel, AActor* Interactable) override;
-	virtual void UpdateInteractionEntries(const FXInUInteractionInfo& InteractionInfo) override;
-	
-/*--------------------------------------------------------------------------------------------------------------------*/
 	
 /*--------------------------------------------------------------------------------------------------------------------*/
 	/* Interaction Timer */
-
+	
 public:
-	virtual float GetInteractionMaxTime(const FGameplayTag InteractionChannel) override;
-	virtual float GetInteractionTimeElapsed(const FGameplayTag InteractionChannel) override;
-	virtual float GetInteractionTimeLeft(const FGameplayTag InteractionChannel) override;
 	virtual void UpdateInteractionTimerData(const FXInUInteractionTimerData& NewInteractionTimer);
 	virtual void ResetInteractionTimerData();
 private:

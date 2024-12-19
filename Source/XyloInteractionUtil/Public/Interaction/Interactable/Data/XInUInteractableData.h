@@ -17,6 +17,9 @@ struct FXInUInteractionData
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	float InteractionTime;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	bool bClientOnlyInteractionTime = false;
 };
 
 

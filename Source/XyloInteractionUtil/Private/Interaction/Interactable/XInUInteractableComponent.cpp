@@ -38,6 +38,78 @@ void UXInUInteractableComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 	DOREPLIFETIME(UXInUInteractableComponent, bAvailableForInteraction);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/*
+ * UXInUBaseInteractionComponent Interface
+ */
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+/* InteractionInfoDelegates */
+
+void UXInUInteractableComponent::ResetInteractionEntries(AActor* Interactable, const FGameplayTag InteractionChannel)
+{
+	Super::ResetInteractionEntries(Interactable, InteractionChannel);
+	ResetInteractionTimerData();
+}
+
+void UXInUInteractableComponent::UpdateInteractionEntries(const FXInUInteractionInfo& InteractionInfo)
+{
+	Super::UpdateInteractionEntries(InteractionInfo);
+	if (!InteractionInfo.bSelected)
+	{
+		ResetInteractionTimerData();
+	}
+}
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+/* Interaction Timer */
+
+float UXInUInteractableComponent::GetDefaultInteractionDurationByTag(const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag)
+{
+	if (InteractableData)
+	{
+		FXInUInteractionData InteractionData;
+		if (InteractableData->GetInteractionData(InteractionTag, InteractionData))
+		{
+			return InteractionData.InteractionTime;
+		}
+	}
+	return -1.f;
+}
+
+float UXInUInteractableComponent::GetInteractionDurationByTag(const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag)
+{
+	if (!InteractionTimer.InteractionTag.MatchesTagExact(InteractionTag)) return -1.f;
+
+	return InteractionTimer.Duration;
+}
+
+float UXInUInteractableComponent::GetInteractionTimeElapsedByTag(const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag)
+{
+	if (!InteractionTimer.InteractionTag.MatchesTagExact(InteractionTag)) return -1.f;
+	
+	if (InteractionTimer.StartTime >= 0.f)
+	{
+		return GetWorld()->GetTimeSeconds() - InteractionTimer.StartTime;
+	}
+	return -1.f;
+}
+
+float UXInUInteractableComponent::GetInteractionTimeLeftByTag(const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag)
+{
+	if (!InteractionTimer.InteractionTag.MatchesTagExact(InteractionTag)) return -1.f;
+	
+	if (InteractionTimer.StartTime >= 0.f && InteractionTimer.Duration >= 0.f)
+	{
+		return FMath::Max((InteractionTimer.StartTime + InteractionTimer.Duration) - GetWorld()->GetTimeSeconds(), 0.f);
+	}
+	return -1.f;
+}
+
+/*--------------------------------------------------------------------------------------------------------------------*/
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -91,50 +163,7 @@ void UXInUInteractableComponent::OnExitInteractRange(UPrimitiveComponent* Overla
 }
 
 /*--------------------------------------------------------------------------------------------------------------------*/
-/* InteractionInfoDelegates */
-
-void UXInUInteractableComponent::ResetInteractionEntries(const FGameplayTag InteractionChannel, AActor* Interactable)
-{
-	Super::ResetInteractionEntries(InteractionChannel, Interactable);
-	ResetInteractionTimerData();
-}
-
-void UXInUInteractableComponent::UpdateInteractionEntries(const FXInUInteractionInfo& InteractionInfo)
-{
-	Super::UpdateInteractionEntries(InteractionInfo);
-	if (!InteractionInfo.bSelected)
-	{
-		ResetInteractionTimerData();
-	}
-}
-
-/*--------------------------------------------------------------------------------------------------------------------*/
-
-/*--------------------------------------------------------------------------------------------------------------------*/
 /* Interaction Timer */
-
-float UXInUInteractableComponent::GetInteractionMaxTime(const FGameplayTag InteractionChannel)
-{
-	return InteractionTimer.Duration;
-}
-
-float UXInUInteractableComponent::GetInteractionTimeElapsed(const FGameplayTag InteractionChannel)
-{
-	if (InteractionTimer.StartTime >= 0.f)
-	{
-		return GetWorld()->GetTimeSeconds() - InteractionTimer.StartTime;
-	}
-	return -1.f;
-}
-
-float UXInUInteractableComponent::GetInteractionTimeLeft(const FGameplayTag InteractionChannel)
-{
-	if (InteractionTimer.StartTime >= 0.f && InteractionTimer.Duration >= 0.f)
-	{
-		return FMath::Max((InteractionTimer.StartTime + InteractionTimer.Duration) - GetWorld()->GetTimeSeconds(), 0.f);
-	}
-	return -1.f;
-}
 
 void UXInUInteractableComponent::UpdateInteractionTimerData(const FXInUInteractionTimerData& NewInteractionTimer)
 {

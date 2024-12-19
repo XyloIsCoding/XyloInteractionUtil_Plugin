@@ -13,7 +13,7 @@ struct FXInUInteractionInfo;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FUpdateInteractionEntriesSignature, const FXInUInteractionInfo&,  InteractionInfo);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FResetInteractionEntriesSignature, const FGameplayTag, InteractionChannel, AActor*, Interactable);
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
+UCLASS(Abstract, ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class XYLOINTERACTIONUTIL_API UXInUBaseInteractionComponent : public UActorComponent
 {
 	GENERATED_BODY()
@@ -41,7 +41,7 @@ protected:
 	
 public:
 	/** Broadcast when an interactable goes out of range or is set to unavailable */
-	virtual void ResetInteractionEntries(const FGameplayTag InteractionChannel, AActor* Interactable);
+	virtual void ResetInteractionEntries(AActor* Interactable, const FGameplayTag InteractionChannel);
 	/** Broadcast when interaction info is updated */
 	virtual void UpdateInteractionEntries(const FXInUInteractionInfo& InteractionInfo);
 
@@ -59,15 +59,18 @@ public:
 	/* Interaction Timer */
 
 public:
+	/** @return default interaction timer duration set in InteractableData data asset, or -1.f if no data found */
+	UFUNCTION(BlueprintCallable, Category = "Interaction")
+	virtual float GetDefaultInteractionDurationByTag(const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag);
 	/** @return interaction timer duration, or -1.f if not timer active */
 	UFUNCTION(BlueprintCallable, Category = "Interaction")
-	virtual float GetInteractionMaxTime(const FGameplayTag InteractionChannel);
+	virtual float GetInteractionDurationByTag(const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag);
 	/** @return interaction time elapsed, or -1.f if not timer active */
 	UFUNCTION(BlueprintCallable, Category = "Interaction")
-	virtual float GetInteractionTimeElapsed(const FGameplayTag InteractionChannel);
+	virtual float GetInteractionTimeElapsedByTag(const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag);
 	/** @return interaction time left, or -1.f if not timer active */
 	UFUNCTION(BlueprintCallable, Category = "Interaction")
-	virtual float GetInteractionTimeLeft(const FGameplayTag InteractionChannel);
+	virtual float GetInteractionTimeLeftByTag(const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag);
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 	

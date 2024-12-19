@@ -42,3 +42,16 @@ struct FXInUInteractionTimerData
 	UPROPERTY(BlueprintReadWrite)
 	float Duration = -1.f;
 };
+
+USTRUCT(BlueprintType)
+struct FXInUInteractionTimerHandle
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadWrite)
+	FGameplayTag InteractionTag;
+	UPROPERTY(BlueprintReadWrite)
+	FTimerHandle TimerHandle;
+	UPROPERTY(BlueprintReadWrite)
+	bool bClientOnly;
+};

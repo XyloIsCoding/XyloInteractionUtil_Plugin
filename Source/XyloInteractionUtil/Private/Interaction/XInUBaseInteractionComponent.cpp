@@ -33,7 +33,7 @@ void UXInUBaseInteractionComponent::BeginPlay()
 /*--------------------------------------------------------------------------------------------------------------------*/
 /* InteractionInfoDelegates */
 
-void UXInUBaseInteractionComponent::ResetInteractionEntries(const FGameplayTag InteractionChannel, AActor* Interactable)
+void UXInUBaseInteractionComponent::ResetInteractionEntries(AActor* Interactable, const FGameplayTag InteractionChannel)
 {
 	ResetInteractionEntriesDelegate.Broadcast(InteractionChannel, Interactable);
 }
@@ -48,17 +48,22 @@ void UXInUBaseInteractionComponent::UpdateInteractionEntries(const FXInUInteract
 /*--------------------------------------------------------------------------------------------------------------------*/
 /* Interaction Timer */
 
-float UXInUBaseInteractionComponent::GetInteractionMaxTime(const FGameplayTag InteractionChannel)
+float UXInUBaseInteractionComponent::GetDefaultInteractionDurationByTag(const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag)
 {
 	return -1.f;
 }
 
-float UXInUBaseInteractionComponent::GetInteractionTimeElapsed(const FGameplayTag InteractionChannel)
+float UXInUBaseInteractionComponent::GetInteractionDurationByTag(const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag)
 {
 	return -1.f;
 }
 
-float UXInUBaseInteractionComponent::GetInteractionTimeLeft(const FGameplayTag InteractionChannel)
+float UXInUBaseInteractionComponent::GetInteractionTimeElapsedByTag(const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag)
+{
+	return -1.f;
+}
+
+float UXInUBaseInteractionComponent::GetInteractionTimeLeftByTag(const FGameplayTag InteractionChannel, const FGameplayTag InteractionTag)
 {
 	return -1.f;
 }
