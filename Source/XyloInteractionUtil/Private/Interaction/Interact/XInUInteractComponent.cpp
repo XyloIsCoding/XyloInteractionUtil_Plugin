@@ -27,6 +27,20 @@ void UXInUInteractComponent::BeginPlay()
 	Super::BeginPlay();
 }
 
+void UXInUInteractComponent::OnRegister()
+{
+	Super::OnRegister();
+	
+	if (!GetOwner<APawn>())
+	{
+		UE_LOG(LogTemp, Error, TEXT("[UXInUInteractComponent::OnRegister] This component can only be added to APawn based classes"));
+	}
+	if (!GetOwner<IXInUInteractInterface>())
+	{
+		UE_LOG(LogTemp, Error, TEXT("[UXInUInteractComponent::OnRegister] The controller class owning this component must implement IXInUInteractInterface"));
+	}
+}
+
 void UXInUInteractComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);

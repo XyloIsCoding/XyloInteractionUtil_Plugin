@@ -8,6 +8,7 @@
 #include "Interaction/Interactable/Data/XInUInteractableData.h"
 #include "Interaction/Interact/XInUInteractComponent.h"
 #include "Interaction/Interact/XInUInteractInterface.h"
+#include "Interaction/Interactable/XInUInteractableInterface.h"
 #include "Net/UnrealNetwork.h"
 
 UXInUInteractableComponent::UXInUInteractableComponent()
@@ -29,6 +30,16 @@ void UXInUInteractableComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	
+}
+
+void UXInUInteractableComponent::OnRegister()
+{
+	Super::OnRegister();
+	
+	if (!GetOwner<IXInUInteractableInterface>())
+	{
+		UE_LOG(LogTemp, Error, TEXT("[UXInUInteractableComponent::OnRegister] The owning class of this component must implement IXInUInteractableInterface"));
+	}
 }
 
 void UXInUInteractableComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
