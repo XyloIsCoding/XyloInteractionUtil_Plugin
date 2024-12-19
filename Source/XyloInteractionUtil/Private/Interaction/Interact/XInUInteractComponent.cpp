@@ -483,8 +483,7 @@ void UXInUInteractComponent::InteractFromTimer(AActor* Interactable, const FGame
 	// since this function is delayed, we check that the interactable is still selected
 	UXInUInteractableComponent* InteractableComponent = GetAvailableInteractableComponent(Interactable, InteractionChannel);
 	if (!InteractableComponent) return;
-
-	//TODO: need to call interact on server if was client only timer
+	
 	Interact(Interactable, InteractionChannel, InteractionTag);
 
 	// Passing timer data to interactable
