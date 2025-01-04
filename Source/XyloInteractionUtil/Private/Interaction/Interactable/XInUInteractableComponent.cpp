@@ -3,7 +3,6 @@
 
 #include "Interaction/Interactable/XInUInteractableComponent.h"
 
-#include "Blueprint/UserWidget.h"
 #include "Interaction/XInUInteractionInfo.h"
 #include "Interaction/Interactable/Data/XInUInteractableData.h"
 #include "Interaction/Interact/XInUInteractComponent.h"
