@@ -16,7 +16,7 @@ struct FXInUInteractionData
 	FGameplayTag InteractionTag;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	float InteractionTime;
+	float InteractionTime = 0.f;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	bool bClientOnlyInteractionTime = false;

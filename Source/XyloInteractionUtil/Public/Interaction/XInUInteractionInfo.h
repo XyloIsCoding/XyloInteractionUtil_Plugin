@@ -21,11 +21,11 @@ struct FXInUInteractionInfo
 	GENERATED_BODY()
 
 	UPROPERTY(BlueprintReadWrite)
-	AActor* Interactable;
+	AActor* Interactable = nullptr;
 	UPROPERTY(BlueprintReadWrite)
 	FGameplayTag InteractionChannel;
 	UPROPERTY(BlueprintReadWrite)
-	bool bSelected;
+	bool bSelected = false;
 	UPROPERTY(BlueprintReadWrite)
 	TArray<FXInUInteractionType> Interactions;
 };
@@ -53,5 +53,5 @@ struct FXInUInteractionTimerHandle
 	UPROPERTY(BlueprintReadWrite)
 	FTimerHandle TimerHandle;
 	UPROPERTY(BlueprintReadWrite)
-	bool bClientOnly;
+	bool bClientOnly = false;
 };
