@@ -68,7 +68,11 @@ void UXInUInteractComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 				Role = FString("None");
 				break;
 			}
-			FString LocalRoleString = FString::Printf(TEXT("Local Role: %s"), *Role) + "> " + FString::Printf(TEXT("InRange: %d"), InteractablesInRange.Num()) + " | "  + FString::Printf(TEXT("Disabled: %d"), DisabledInteractablesInRange.Num());
+
+			TArray<FGameplayTag> Keys;
+			InteractablesInRange.GetKeys(Keys);
+			int32 InteractablesInRangeNum = Keys.Num() > 0 ? InteractablesInRange[Keys[0]].Interactables.Num() : 0;
+			FString LocalRoleString = FString::Printf(TEXT("Local Role: %s"), *Role) + "> " + FString::Printf(TEXT("InRange: %d"), InteractablesInRangeNum) + " | "  + FString::Printf(TEXT("Disabled: %d"), DisabledInteractablesInRange.Num());
 			if (GEngine) GEngine->AddOnScreenDebugMessage(-1, 0.f, LocalRole == ROLE_Authority ? FColor::Green : FColor::Blue, LocalRoleString);
 		}
 	}
@@ -230,7 +234,7 @@ void UXInUInteractComponent::UpdateSelectedInteractable_Local()
 	InteractablesInRange.GetKeys(InteractionChannels);
 	for (FGameplayTag InteractionChannel : InteractionChannels)
 	{
-		float MaxCrossProduct = 0;
+		float MaxCrossProduct = -1.f;
 		AActor* NewSelectedActor = nullptr;
 		for (AActor* Interactable : InteractablesInRange[InteractionChannel].Interactables)
 		{
