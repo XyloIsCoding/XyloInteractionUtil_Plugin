@@ -6,6 +6,8 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "XInUInteractionUtilLibrary.generated.h"
 
+class UXInUInteractableComponent;
+
 /**
  * 
  */
@@ -13,5 +15,8 @@ UCLASS()
 class XYLOINTERACTIONUTIL_API UXInUInteractionUtilLibrary : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
-	
+
+public:
+	static UXInUInteractableComponent* GetInteractableComponent(AActor* InteractableActor);
+	static bool GetInteractionAimTransform(AActor* InteractActor, FTransform& AimTransform);
 };

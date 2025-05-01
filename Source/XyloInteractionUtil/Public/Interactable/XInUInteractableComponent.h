@@ -7,22 +7,50 @@
 #include "XInUInteractableComponent.generated.h"
 
 
+class UXInUInteractableData;
+struct FGameplayTag;
+
+DECLARE_MULTICAST_DELEGATE_TwoParams(FAvailabilityChangedSignature, AActor*, bool)
+
+/**
+ *
+ */
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class XYLOINTERACTIONUTIL_API UXInUInteractableComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:	
-	// Sets default values for this component's properties
-	UXInUInteractableComponent();
+	UXInUInteractableComponent(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	/*
+	 * UActorComponent Interface
+	 */
+	
 protected:
-	// Called when the game starts
 	virtual void BeginPlay() override;
-
 public:	
-	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-		
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	/*
+	 * UXInUInteractableComponent Interface
+	 */
+
+public:
+	FAvailabilityChangedSignature AvailabilityChangedDelegate;
+	void SetAvailable(bool bAvailable);
+	bool IsAvailable() const { return bAvailableForInteraction; }
+private:
+	bool bAvailableForInteraction = true;
+
+public:
+	bool GetInteractionChannel(FGameplayTag& OutChannel) const;
+private:
+	UPROPERTY()
+	TObjectPtr<UXInUInteractableData> InteractableData;
+	
 };

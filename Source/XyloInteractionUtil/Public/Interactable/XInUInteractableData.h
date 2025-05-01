@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "Engine/DataAsset.h"
 #include "XInUInteractableData.generated.h"
 
@@ -13,5 +14,8 @@ UCLASS()
 class XYLOINTERACTIONUTIL_API UXInUInteractableData : public UDataAsset
 {
 	GENERATED_BODY()
-	
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FGameplayTag InteractionChannel;
 };

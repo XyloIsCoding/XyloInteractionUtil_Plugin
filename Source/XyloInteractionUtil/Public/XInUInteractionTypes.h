@@ -3,15 +3,17 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Kismet/BlueprintFunctionLibrary.h"
+#include "GameplayTagContainer.h"
 #include "XInUInteractionTypes.generated.h"
 
-/**
- * 
- */
-UCLASS()
-class XYLOINTERACTIONUTIL_API UXInUInteractionTypes : public UBlueprintFunctionLibrary
+
+USTRUCT()
+struct FXInUInteractionKey
 {
 	GENERATED_BODY()
-	
+
+	UPROPERTY(BlueprintReadWrite)
+	FGameplayTag Channel;
+	UPROPERTY(BlueprintReadWrite)
+	FGameplayTag Action;
 };
