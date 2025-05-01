@@ -46,3 +46,31 @@ bool UXInUInteractableComponent::GetInteractionChannel(FGameplayTag& OutChannel)
 	OutChannel = InteractableData->InteractionChannel;
 	return true;
 }
+
+float UXInUInteractableComponent::GetInteractionDuration(const FGameplayTag& Action) const
+{
+	if (!InteractableData) return -1.f;
+	FXInUInteractionSettings* InteractionSettings = InteractableData->GetInteractionSettings(Action);
+	if (!InteractionSettings) return -1.f;
+	
+	return InteractionSettings->InteractionDuration;
+}
+
+float UXInUInteractableComponent::IsInteractionDurationClientSideOnly(const FGameplayTag& Action) const
+{
+	if (!InteractableData) return false;
+	FXInUInteractionSettings* InteractionSettings = InteractableData->GetInteractionSettings(Action);
+	if (!InteractionSettings) return false;
+
+	return InteractionSettings->bClientOnlyInteractionDuration;
+}
+
+void UXInUInteractableComponent::UpdateInteractionTimerData(const FXInUInteractionTimerData& NewTimerData)
+{
+	InteractionTimerData = NewTimerData;
+}
+
+void UXInUInteractableComponent::ResetInteractionTimerData()
+{
+	InteractionTimerData.Reset();
+}

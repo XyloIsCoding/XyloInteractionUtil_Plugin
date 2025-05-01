@@ -7,6 +7,19 @@
 #include "Engine/DataAsset.h"
 #include "XInUInteractableData.generated.h"
 
+
+USTRUCT(BlueprintType)
+struct FXInUInteractionSettings
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	float InteractionDuration;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	bool bClientOnlyInteractionDuration;
+};
+
+
 /**
  * 
  */
@@ -18,4 +31,11 @@ class XYLOINTERACTIONUTIL_API UXInUInteractableData : public UDataAsset
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FGameplayTag InteractionChannel;
+private:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TMap<FGameplayTag, FXInUInteractionSettings> InteractionSettings;
+
+public:
+	FXInUInteractionSettings* GetInteractionSettings(const FGameplayTag& Action);
+	
 };

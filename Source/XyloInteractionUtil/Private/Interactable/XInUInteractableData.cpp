@@ -3,3 +3,7 @@
 
 #include "Interactable/XInUInteractableData.h"
 
+FXInUInteractionSettings* UXInUInteractableData::GetInteractionSettings(const FGameplayTag& Action)
+{
+	return InteractionSettings.Find(Action);
+}

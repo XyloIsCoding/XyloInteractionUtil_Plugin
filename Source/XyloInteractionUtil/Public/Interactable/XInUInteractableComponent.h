@@ -3,9 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "XInUInteractionTypes.h"
 #include "Components/ActorComponent.h"
 #include "XInUInteractableComponent.generated.h"
-
 
 class UXInUInteractableData;
 struct FGameplayTag;
@@ -49,8 +49,16 @@ private:
 
 public:
 	bool GetInteractionChannel(FGameplayTag& OutChannel) const;
+	
+	float GetInteractionDuration(const FGameplayTag& Action) const;
+	float IsInteractionDurationClientSideOnly(const FGameplayTag& Action) const;
 private:
 	UPROPERTY()
 	TObjectPtr<UXInUInteractableData> InteractableData;
-	
+
+public:
+	void UpdateInteractionTimerData(const FXInUInteractionTimerData& NewTimerData);
+	void ResetInteractionTimerData();
+private:
+	FXInUInteractionTimerData InteractionTimerData;
 };

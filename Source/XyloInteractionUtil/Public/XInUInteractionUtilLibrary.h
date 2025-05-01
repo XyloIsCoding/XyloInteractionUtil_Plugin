@@ -6,6 +6,7 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "XInUInteractionUtilLibrary.generated.h"
 
+struct FGameplayTag;
 class UXInUInteractableComponent;
 
 /**
@@ -19,4 +20,5 @@ class XYLOINTERACTIONUTIL_API UXInUInteractionUtilLibrary : public UBlueprintFun
 public:
 	static UXInUInteractableComponent* GetInteractableComponent(AActor* InteractableActor);
 	static bool GetInteractionAimTransform(AActor* InteractActor, FTransform& AimTransform);
+	static float GetDefaultInteractionDuration(AActor* InteractableActor, const FGameplayTag& Action);
 };

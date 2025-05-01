@@ -30,6 +30,15 @@ private:
 	TMap<FGameplayTag, FInteractables> UnAvailable;
 };
 
+UENUM()
+enum class EXInUInteractionTimerStatus : uint8
+{
+	ETS_None,
+	ETS_Inactive,
+	ETS_ClientSide,
+	ETS_ServerAuth
+};
+
 USTRUCT()
 struct FXInUSelectedInteractable
 {
@@ -39,16 +48,17 @@ struct FXInUSelectedInteractable
 	{
 		TWeakObjectPtr<AActor> Interactable;
 		FTimerHandle InteractionTimerHandle;
-		bool IsClientOnlyTimer;
+		bool bClientOnlyTimer;
 	};
 	
 public:
-	void UpdateSelection(const FGameplayTag& Channel, AActor* Interactable);
 	AActor* GetSelected(const FGameplayTag& Channel);
+	bool IsSelected(const FGameplayTag& Channel, AActor* Interactable);
+	void UpdateSelection(const FGameplayTag& Channel, AActor* Interactable);
+	void InvalidateSelection(const FGameplayTag& Channel, AActor* Interactable);
+	bool StartInteractionTimer(const FGameplayTag& Channel, const FTimerDelegate& TimerDelegate, float Duration, bool bClientOnly);
 	bool StopInteractionTimer(const FGameplayTag& Channel);
-	bool IsInteractionTimerActive(const FGameplayTag& Channel);
-	bool IsInteractionTimerClientSide(const FGameplayTag& Channel); // TODO: does not really have meaning without a HasTimer check
-	bool IsInteractionTimerActiveClientSide(const FGameplayTag& Channel); // TODO: finish
+	EXInUInteractionTimerStatus GetInteractionTimerStatus(const FGameplayTag& Channel);
 private:
 	TMap<FGameplayTag, FSelected> Selected;
 };
@@ -94,6 +104,8 @@ private:
 
 protected:
 	void UpdateSelection();
+	void UpdateSelectionForChannel(const FGameplayTag& Channel);
+	void UpdateSelectionInternal(const FGameplayTag& Channel, const FVector& AimLocation, const FVector& AimDirection);
 	virtual void UpdateInteractableStatus(const FGameplayTag& Channel, AActor* Interactable, bool bSelected);
 private:
 	FXInUSelectedInteractable SelectedInteractables;
@@ -115,10 +127,12 @@ protected:
 	virtual void ServerStopInteractionRPC(AActor* Interactable, const FGameplayTag& Channel);
 	
 	virtual bool StartInteraction(AActor* Interactable, const FGameplayTag& Channel, const FGameplayTag& Action);
-	virtual bool StartInteractionWithDuration(AActor* Interactable, const FGameplayTag& Channel, const FGameplayTag& Action, const float InteractionTime);
 	virtual void StopInteraction(AActor* Interactable, const FGameplayTag& Channel);
 	
 	virtual void Interact(AActor* Interactable, const FGameplayTag& Channel, const FGameplayTag& Action);
+
+	virtual bool StartInteractionWithDuration(AActor* Interactable, const FGameplayTag& Channel, const FGameplayTag& Action, float Duration, const bool bClientOnly);
+	virtual void InteractionTimerEnded(AActor* Interactable, const FGameplayTag Channel, const FGameplayTag Action, const bool bClientOnly);
 	virtual void InteractFromTimer(AActor* Interactable, const FGameplayTag& Channel, const FGameplayTag& Action);
 	UFUNCTION(Server, Reliable)
 	virtual void ServerInteractFromTimerRPC(AActor* Interactable, const FGameplayTag& Channel, const FGameplayTag& Action);
