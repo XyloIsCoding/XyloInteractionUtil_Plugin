@@ -3,6 +3,7 @@
 
 #include "XInUInteractionUtilLibrary.h"
 
+#include "XInUInteractionInterface.h"
 #include "Interact/XInUInteractInterface.h"
 #include "Interactable/XInUInteractableComponent.h"
 #include "Interactable/XInUInteractableInterface.h"
@@ -30,3 +31,4 @@ float UXInUInteractionUtilLibrary::GetDefaultInteractionDuration(AActor* Interac
 
 	return InteractableComponent->GetInteractionDuration(Action);
 }
+

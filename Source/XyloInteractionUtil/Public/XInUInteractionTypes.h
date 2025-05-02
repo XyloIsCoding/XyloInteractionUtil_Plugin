@@ -6,7 +6,6 @@
 #include "GameplayTagContainer.h"
 #include "XInUInteractionTypes.generated.h"
 
-
 USTRUCT(BlueprintType)
 struct FXInUInteractionTimerData
 {
@@ -37,6 +36,8 @@ struct FXInUInteractionInfo
 	GENERATED_BODY()
 
 	UPROPERTY(BlueprintReadWrite)
+	AActor* Interactor = nullptr;
+	UPROPERTY(BlueprintReadWrite)
 	AActor* Interactable = nullptr;
 	UPROPERTY(BlueprintReadWrite)
 	FGameplayTag Channel;
@@ -49,4 +50,14 @@ private:
 public:
 	FXInUInteractionState* GetInteractionState(const FGameplayTag& Action);
 	void AddInteractionState(const FGameplayTag& Action, const FXInUInteractionState& State);
+};
+
+DECLARE_MULTICAST_DELEGATE_OneParam(FXInUInteractionInfoSignature, FXInUInteractionInfo)
+DECLARE_MULTICAST_DELEGATE_TwoParams(FXInUInteractionInfoResetSignature, AActor*, FGameplayTag)
+
+UENUM(BlueprintType)
+enum class EXInUInteractableUnselectedBehaviour : uint8
+{
+	EUB_ComputeInteractions UMETA(DisplayName = "Compute Interactions"),
+	EUB_SkipInteractions UMETA(DisplayName = "Skip Interactions"),
 };

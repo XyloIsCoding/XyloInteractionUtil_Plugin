@@ -3,9 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "XInUInteractionTypes.h"
 #include "Components/ActorComponent.h"
 #include "XInUInteractComponent.generated.h"
 
+struct FXInUInteractionInfo;
+struct FXInUInteractionState;
 class UXInUInteractComponent;
 struct FXInUInteractionKey;
 struct FGameplayTag;
@@ -25,6 +28,7 @@ public:
 	bool UnRegisterInteractable(AActor* Interactable);
 	void GetChannels(TArray<FGameplayTag>& OutChannels);
 	bool GetAvailable(const FGameplayTag& Channel, TArray<AActor*>& OutInteractables);
+	bool IsAvailable(const FGameplayTag& Channel, AActor* Interactable) const;
 private:
 	TMap<FGameplayTag, FInteractables> Available;
 	TMap<FGameplayTag, FInteractables> UnAvailable;
@@ -96,6 +100,12 @@ public:
 	 */
 
 public:
+	void ResetInteractionState(AActor* Interactable, const FGameplayTag& Channel);
+	void UpdateInteractionState(const FXInUInteractionInfo& InteractionInfo);
+	FXInUInteractionInfoResetSignature InteractionInfoResetDelegate;
+	FXInUInteractionInfoSignature InteractionInfoDelegate;
+
+public:
 	void RegisterInteractable(AActor* Interactable);
 	void UnRegisterInteractable(AActor* Interactable);
 	void UpdateInteractableAvailability(AActor* Interactable, bool bAvailable);
@@ -111,7 +121,7 @@ private:
 	FXInUSelectedInteractable SelectedInteractables;
 
 /*--------------------------------------------------------------------------------------------------------------------*/
-	/* Interaction */
+	/* Interaction Management */
 
 public:
 	/** Function to call to start an interaction. should be called from locally controlled actors.
@@ -128,8 +138,6 @@ protected:
 	
 	virtual bool StartInteraction(AActor* Interactable, const FGameplayTag& Channel, const FGameplayTag& Action);
 	virtual void StopInteraction(AActor* Interactable, const FGameplayTag& Channel);
-	
-	virtual void Interact(AActor* Interactable, const FGameplayTag& Channel, const FGameplayTag& Action);
 
 	virtual bool StartInteractionWithDuration(AActor* Interactable, const FGameplayTag& Channel, const FGameplayTag& Action, float Duration, const bool bClientOnly);
 	virtual void InteractionTimerEnded(AActor* Interactable, const FGameplayTag Channel, const FGameplayTag Action, const bool bClientOnly);
@@ -137,9 +145,19 @@ protected:
 	UFUNCTION(Server, Reliable)
 	virtual void ServerInteractFromTimerRPC(AActor* Interactable, const FGameplayTag& Channel, const FGameplayTag& Action);
 
-	//~ Interaction
+	//~ Interaction Management
 /*--------------------------------------------------------------------------------------------------------------------*/
-	
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+	/* Interaction Logic */
+
+protected:
+	virtual bool CheckInteraction(AActor* Interactable, const FGameplayTag& Channel, const FGameplayTag& Action, FXInUInteractionState OutState);
+	virtual void Interact(AActor* Interactable, const FGameplayTag& Channel, const FGameplayTag& Action);
+
+	//~ Interaction Logic
+/*--------------------------------------------------------------------------------------------------------------------*/
+
 	
 };
 

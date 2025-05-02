@@ -5,11 +5,20 @@
 
 #include "GameplayTagContainer.h"
 #include "Interactable/XInUInteractableData.h"
+#include "Net/UnrealNetwork.h"
 
 
 UXInUInteractableComponent::UXInUInteractableComponent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
+	SetIsReplicatedByDefault(true);
+}
+
+void UXInUInteractableComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ThisClass, bAvailableForInteraction);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -23,9 +32,16 @@ void UXInUInteractableComponent::BeginPlay()
 	Super::BeginPlay();
 }
 
-void UXInUInteractableComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void UXInUInteractableComponent::OnRegister()
 {
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	Super::OnRegister();
+
+	if (!InteractableData)
+	{
+		FString OwnerName = FString();
+		if (GetOwner()) GetOwner()->GetName(OwnerName);
+		UE_LOG(LogTemp, Error, TEXT("[%s] UXInUInteractableComponent needs a valid InteractableData to be set"), *OwnerName)
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -33,10 +49,30 @@ void UXInUInteractableComponent::TickComponent(float DeltaTime, ELevelTick TickT
 /*
  * UXInUInteractableComponent Interface
  */
+ 
+void UXInUInteractableComponent::ResetInteractionState(AActor* Interactor)
+{
+	InteractionResetDelegate.Broadcast(Interactor, InteractableData ? InteractableData->InteractionChannel : FGameplayTag());
+}
+
+void UXInUInteractableComponent::UpdateInteractionState(const FXInUInteractionInfo& InteractionInfo)
+{
+	InteractionInfoDelegate.Broadcast(InteractionInfo);
+}
 
 void UXInUInteractableComponent::SetAvailable(bool bAvailable)
 {
 	bAvailableForInteraction = bAvailable;
+	AvailabilitySet();
+}
+
+void UXInUInteractableComponent::OnRep_AvailableForInteraction()
+{
+	AvailabilitySet();
+}
+
+void UXInUInteractableComponent::AvailabilitySet()
+{
 	AvailabilityChangedDelegate.Broadcast(GetOwner(), bAvailableForInteraction);
 }
 
@@ -63,6 +99,19 @@ float UXInUInteractableComponent::IsInteractionDurationClientSideOnly(const FGam
 	if (!InteractionSettings) return false;
 
 	return InteractionSettings->bClientOnlyInteractionDuration;
+}
+
+bool UXInUInteractableComponent::GetSupportedActions(FGameplayTagContainer& Actions) const
+{
+	if (!InteractableData) return false;
+	InteractableData->GetSupportedActions(Actions);
+	return true;
+}
+
+EXInUInteractableUnselectedBehaviour UXInUInteractableComponent::GetUnselectedBehaviour() const
+{
+	if (!InteractableData) return EXInUInteractableUnselectedBehaviour::EUB_SkipInteractions;
+	return InteractableData->UnselectedBehaviour;
 }
 
 void UXInUInteractableComponent::UpdateInteractionTimerData(const FXInUInteractionTimerData& NewTimerData)

@@ -10,7 +10,7 @@
 class UXInUInteractableData;
 struct FGameplayTag;
 
-DECLARE_MULTICAST_DELEGATE_TwoParams(FAvailabilityChangedSignature, AActor*, bool)
+DECLARE_MULTICAST_DELEGATE_TwoParams(FXInUAvailabilityChangedSignature, AActor*, bool)
 
 /**
  *
@@ -22,6 +22,7 @@ class XYLOINTERACTIONUTIL_API UXInUInteractableComponent : public UActorComponen
 
 public:	
 	UXInUInteractableComponent(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -31,8 +32,7 @@ public:
 	
 protected:
 	virtual void BeginPlay() override;
-public:	
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	virtual void OnRegister() override;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -41,17 +41,29 @@ public:
 	 */
 
 public:
-	FAvailabilityChangedSignature AvailabilityChangedDelegate;
+	void ResetInteractionState(AActor* Interactor);
+	void UpdateInteractionState(const FXInUInteractionInfo& InteractionInfo);
+	FXInUInteractionInfoResetSignature InteractionResetDelegate;
+	FXInUInteractionInfoSignature InteractionInfoDelegate;
+
+public:
+	FXInUAvailabilityChangedSignature AvailabilityChangedDelegate;
 	void SetAvailable(bool bAvailable);
 	bool IsAvailable() const { return bAvailableForInteraction; }
+protected:
+	UFUNCTION()
+	void OnRep_AvailableForInteraction();
+	void AvailabilitySet();
 private:
+	UPROPERTY(ReplicatedUsing = OnRep_AvailableForInteraction)
 	bool bAvailableForInteraction = true;
 
 public:
 	bool GetInteractionChannel(FGameplayTag& OutChannel) const;
-	
 	float GetInteractionDuration(const FGameplayTag& Action) const;
 	float IsInteractionDurationClientSideOnly(const FGameplayTag& Action) const;
+	bool GetSupportedActions(FGameplayTagContainer& Actions) const;
+	EXInUInteractableUnselectedBehaviour GetUnselectedBehaviour() const;
 private:
 	UPROPERTY()
 	TObjectPtr<UXInUInteractableData> InteractableData;

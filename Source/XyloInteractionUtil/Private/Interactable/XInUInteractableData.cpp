@@ -7,3 +7,13 @@ FXInUInteractionSettings* UXInUInteractableData::GetInteractionSettings(const FG
 {
 	return InteractionSettings.Find(Action);
 }
+
+void UXInUInteractableData::GetSupportedActions(FGameplayTagContainer& Actions) const
+{
+	TArray<FGameplayTag> ActionTags;
+	InteractionSettings.GetKeys(ActionTags);
+	for (const FGameplayTag& Tag : ActionTags)
+	{
+		Actions.AddTag(Tag);
+	}
+}

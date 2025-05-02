@@ -8,6 +8,8 @@
 #include "XInUInteractableData.generated.h"
 
 
+enum class EXInUInteractableUnselectedBehaviour : uint8;
+
 USTRUCT(BlueprintType)
 struct FXInUInteractionSettings
 {
@@ -31,11 +33,13 @@ class XYLOINTERACTIONUTIL_API UXInUInteractableData : public UDataAsset
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FGameplayTag InteractionChannel;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	EXInUInteractableUnselectedBehaviour UnselectedBehaviour;
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TMap<FGameplayTag, FXInUInteractionSettings> InteractionSettings;
 
 public:
 	FXInUInteractionSettings* GetInteractionSettings(const FGameplayTag& Action);
-	
+	void GetSupportedActions(FGameplayTagContainer& Actions) const;
 };

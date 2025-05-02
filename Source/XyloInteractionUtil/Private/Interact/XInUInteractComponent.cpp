@@ -3,6 +3,7 @@
 
 #include "Interact/XInUInteractComponent.h"
 
+#include "XInUInteractionInterface.h"
 #include "XInUInteractionTypes.h"
 #include "XInUInteractionUtilLibrary.h"
 #include "Interactable/XInUInteractableComponent.h"
@@ -64,6 +65,14 @@ bool FXInUInteractableList::GetAvailable(const FGameplayTag& Channel, TArray<AAc
 		}
 	}
 	return OutInteractables.Num() > 0;
+}
+
+bool FXInUInteractableList::IsAvailable(const FGameplayTag& Channel, AActor* Interactable) const
+{
+	const FInteractables* InteractablesContainer = Available.Find(Channel);
+	if (!InteractablesContainer) return false;
+	
+	return InteractablesContainer->Interactables.Contains(Interactable);
 }
 
 AActor* FXInUSelectedInteractable::GetSelected(const FGameplayTag& Channel)
@@ -141,6 +150,8 @@ EXInUInteractionTimerStatus FXInUSelectedInteractable::GetInteractionTimerStatus
 UXInUInteractComponent::UXInUInteractComponent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
+	SetIsReplicatedByDefault(true);
+	PrimaryComponentTick.bCanEverTick = true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -167,6 +178,16 @@ void UXInUInteractComponent::TickComponent(float DeltaTime, ELevelTick TickType,
  * UXInUInteractComponent Interface
  */
 
+void UXInUInteractComponent::ResetInteractionState(AActor* Interactable, const FGameplayTag& Channel)
+{
+	InteractionInfoResetDelegate.Broadcast(Interactable, Channel);
+}
+
+void UXInUInteractComponent::UpdateInteractionState(const FXInUInteractionInfo& InteractionInfo)
+{
+	InteractionInfoDelegate.Broadcast(InteractionInfo);
+}
+
 void UXInUInteractComponent::RegisterInteractable(AActor* Interactable)
 {
 	if (InteractablesInRage.RegisterInteractable(Interactable))
@@ -178,6 +199,12 @@ void UXInUInteractComponent::RegisterInteractable(AActor* Interactable)
 		if (InteractableComponent->GetInteractionChannel(Channel))
 		{
 			UpdateSelectionForChannel(Channel);
+			// If it has been selected, then UpdateInteractableStatus was already run for this Interactable,
+			// so we only update if unselected.
+			if (!SelectedInteractables.IsSelected(Channel, Interactable))
+			{
+				UpdateInteractableStatus(Channel, Interactable, false);
+			}
 		}
 	}
 }
@@ -192,7 +219,16 @@ void UXInUInteractComponent::UnRegisterInteractable(AActor* Interactable)
 		FGameplayTag Channel;
 		if (InteractableComponent->GetInteractionChannel(Channel))
 		{
-			UpdateSelectionForChannel(Channel);
+			// UpdateSelectionForChannel already runs UpdateInteractableStatus on old and new selection, so if this
+			// interactable was selected, there is no need to call UpdateInteractableStatus again
+			if (SelectedInteractables.IsSelected(Channel, Interactable))
+			{
+				UpdateSelectionForChannel(Channel);
+			}
+			else
+			{
+				UpdateInteractableStatus(Channel, Interactable, false);
+			}
 		}
 	}
 }
@@ -262,48 +298,40 @@ void UXInUInteractComponent::UpdateInteractableStatus(const FGameplayTag& Channe
 {
 	UXInUInteractableComponent* InteractableComponent = UXInUInteractionUtilLibrary::GetInteractableComponent(Interactable);
 
-	
-	// TODO: broadcast things from here and from interactable component
-
-	// if has no interactable data or not in range, then reset and return
-	const UXInUInteractableData* InteractableData = InteractableComponent->GetInteractableData();
-	if (!InteractableData || !IsInteractableInRange(Interactable, InteractionChannel))
+	// if not in range anymore, then reset and return
+	if (!InteractablesInRage.IsAvailable(Channel, Interactable))
 	{
-		InteractableComponent->ResetInteractionEntries(Interactable, InteractionChannel);
-		ResetInteractionEntries(Interactable, InteractionChannel);
+		InteractableComponent->ResetInteractionState(GetOwner());
+		ResetInteractionState(Interactable, Channel);
 		return;
 	}
 
 	FXInUInteractionInfo InteractionInfo;
+	InteractionInfo.Interactor = GetOwner();
 	InteractionInfo.Interactable = Interactable;
-	InteractionInfo.InteractionChannel = InteractionChannel;
+	InteractionInfo.Channel = Channel;
 	InteractionInfo.bSelected = bSelected;
 
 	// if selected, or unselected behaviour is to compute interactions
 	// Get all interaction tags from actor's InteractableData, and generate the status for each
 	if (bSelected || InteractableComponent->GetUnselectedBehaviour() == EXInUInteractableUnselectedBehaviour::EUB_ComputeInteractions)
 	{
-		const TArray<FXInUInteractionData>& InteractionTags = InteractableComponent->GetInteractableData()->GetPossibleInteractions();
-		for (const FXInUInteractionData InteractionData : InteractionTags)
+		FGameplayTagContainer Actions;
+		InteractableComponent->GetSupportedActions(Actions);
+		for (FGameplayTag Action : Actions)
 		{
-			FGameplayTag InteractionStatus;
-			GetInteractInterface()->Execute_CanInteract(GetOwner(), Interactable, InteractionData.InteractionTag, InteractionStatus);
-			if (InteractionStatus.IsValid())
-			{
-				FXInUInteractionType Interaction;
-				Interaction.InteractionStatus = InteractionStatus;
-				Interaction.InteractionTag = InteractionData.InteractionTag;
-				InteractionInfo.Interactions.Add(Interaction);
-			}
+			FXInUInteractionState InteractionState;
+			CheckInteraction(Interactable, Channel, Action, InteractionState);
+			InteractionInfo.AddInteractionState(Action, InteractionState);
 		}
 	}
 
-	InteractableComponent->UpdateInteractionEntries(InteractionInfo);
-	UpdateInteractionEntries(InteractionInfo);
+	InteractableComponent->UpdateInteractionState(InteractionInfo);
+	UpdateInteractionState(InteractionInfo);
 }
 
 /*--------------------------------------------------------------------------------------------------------------------*/
-/* Interaction */
+/* Interaction Management */
 
 void UXInUInteractComponent::InputStartInteraction(const FGameplayTag& Channel, const FGameplayTag& Action)
 {
@@ -330,6 +358,15 @@ void UXInUInteractComponent::InputStopInteraction(const FGameplayTag& Channel)
 	if (TimerStatus != EXInUInteractionTimerStatus::ETS_ClientSide && GetOwner() && !GetOwner()->HasAuthority())
 	{
 		ServerStopInteractionRPC(Interactable, Channel);
+	}
+	
+	// Resetting timer data for interactable
+	if (GetOwner<APawn>() && GetOwner<APawn>()->IsLocallyControlled())
+	{
+		if (UXInUInteractableComponent* InteractableComponent = UXInUInteractionUtilLibrary::GetInteractableComponent(Interactable))
+		{
+			InteractableComponent->ResetInteractionTimerData();
+		}
 	}
 }
 
@@ -364,12 +401,6 @@ bool UXInUInteractComponent::StartInteraction(AActor* Interactable, const FGamep
 void UXInUInteractComponent::StopInteraction(AActor* Interactable, const FGameplayTag& Channel)
 {
 	SelectedInteractables.StopInteractionTimer(Channel);
-}
-
-void UXInUInteractComponent::Interact(AActor* Interactable, const FGameplayTag& Channel, const FGameplayTag& Action)
-{
-	//TODO: implement interaction interface
-	//TODO: we want to check first the interactable, then this owner for interaction interface stuff
 }
 
 bool UXInUInteractComponent::StartInteractionWithDuration(AActor* Interactable, const FGameplayTag& Channel, const FGameplayTag& Action, float Duration, const bool bClientOnly)
@@ -412,7 +443,7 @@ void UXInUInteractComponent::InteractFromTimer(AActor* Interactable, const FGame
 	
 	Interact(Interactable, Channel, Action);
 
-	// Passing timer data to interactable
+	// Resetting timer data for interactable
 	if (GetOwner<APawn>() && GetOwner<APawn>()->IsLocallyControlled())
 	{
 		InteractableComponent->ResetInteractionTimerData();
@@ -424,6 +455,63 @@ void UXInUInteractComponent::ServerInteractFromTimerRPC_Implementation(AActor* I
 	InteractFromTimer(Interactable, Channel, Action);
 }
 
-//~ Interaction
+//~ Interaction Management
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+/* Interaction Logic */
+
+bool UXInUInteractComponent::CheckInteraction(AActor* Interactable, const FGameplayTag& Channel, const FGameplayTag& Action, FXInUInteractionState OutState)
+{
+	bool bInteractionFound = false;
+
+	// Try interactable side
+	if (IXInUInteractionInterface* InteractableInteraction = Cast<IXInUInteractionInterface>(Interactable))
+	{
+		bInteractionFound = InteractableInteraction->CanInteract(GetOwner(), Channel, Action, OutState);
+	}
+
+	// Try interact side
+	if (!bInteractionFound)
+	{
+		if (IXInUInteractionInterface* InteractInteraction = Cast<IXInUInteractionInterface>(GetOwner()))
+		{
+			bInteractionFound = InteractInteraction->CanInteract(Interactable, Channel, Action, OutState);
+		}
+	}
+
+	return bInteractionFound;
+}
+
+void UXInUInteractComponent::Interact(AActor* Interactable, const FGameplayTag& Channel, const FGameplayTag& Action)
+{
+	FXInUInteractionState InteractionState;
+	bool bInteractionFound = false;
+
+	// Try interactable side
+	if (IXInUInteractionInterface* InteractableInteraction = Cast<IXInUInteractionInterface>(Interactable))
+	{
+		bInteractionFound = InteractableInteraction->CanInteract(GetOwner(), Channel, Action, InteractionState);
+		if (bInteractionFound)
+		{
+			InteractableInteraction->TryInteract(GetOwner(), Channel, Action);
+		}
+	}
+
+	// Try interact side
+	if (!bInteractionFound)
+	{
+		if (IXInUInteractionInterface* InteractInteraction = Cast<IXInUInteractionInterface>(GetOwner()))
+		{
+			bInteractionFound = InteractInteraction->CanInteract(Interactable, Channel, Action, InteractionState);
+			if (bInteractionFound)
+			{
+				InteractInteraction->TryInteract(Interactable, Channel, Action);
+			}
+		}
+	}
+}
+
+//~ Interaction Logic
 /*--------------------------------------------------------------------------------------------------------------------*/
 
