@@ -44,7 +44,7 @@ struct FXInUInteractionInfo
 	UPROPERTY(BlueprintReadWrite)
 	bool bSelected = false;
 private:
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY()
 	TMap<FGameplayTag, FXInUInteractionState> InteractionsState;
 
 public:

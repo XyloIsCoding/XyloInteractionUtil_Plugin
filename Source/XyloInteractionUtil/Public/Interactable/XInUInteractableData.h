@@ -36,7 +36,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	EXInUInteractableUnselectedBehaviour UnselectedBehaviour;
 private:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess))
 	TMap<FGameplayTag, FXInUInteractionSettings> InteractionSettings;
 
 public:

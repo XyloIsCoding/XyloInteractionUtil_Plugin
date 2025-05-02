@@ -4,12 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
-#include "XInUInteractInterface.generated.h"
+#include "XInUInteractorInterface.generated.h"
 
-class UXInUInteractComponent;
+class UXInUInteractorComponent;
+
 // This class does not need to be modified.
 UINTERFACE(MinimalAPI)
-class UXInUInteractInterface : public UInterface
+class UXInUInteractorInterface : public UInterface
 {
 	GENERATED_BODY()
 };
@@ -17,11 +18,11 @@ class UXInUInteractInterface : public UInterface
 /**
  * 
  */
-class XYLOINTERACTIONUTIL_API IXInUInteractInterface
+class XYLOINTERACTIONUTIL_API IXInUInteractorInterface
 {
 	GENERATED_BODY()
 
 public:
-	virtual UXInUInteractComponent* GetInteractComponent() const = 0;
+	virtual UXInUInteractorComponent* GetInteractorComponent() const = 0;
 	virtual bool GetInteractionAimTransform(FTransform& AimTransform) const = 0;
 };

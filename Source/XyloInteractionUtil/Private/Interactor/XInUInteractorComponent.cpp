@@ -1,7 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
-#include "Interact/XInUInteractComponent.h"
+#include "Interactor/XInUInteractorComponent.h"
 
 #include "XInUInteractionInterface.h"
 #include "XInUInteractionTypes.h"
@@ -147,7 +146,7 @@ EXInUInteractionTimerStatus FXInUSelectedInteractable::GetInteractionTimerStatus
 /*--------------------------------------------------------------------------------------------------------------------*/
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-UXInUInteractComponent::UXInUInteractComponent(const FObjectInitializer& ObjectInitializer)
+UXInUInteractorComponent::UXInUInteractorComponent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 	SetIsReplicatedByDefault(true);
@@ -160,12 +159,12 @@ UXInUInteractComponent::UXInUInteractComponent(const FObjectInitializer& ObjectI
  * UActorComponent Interface
  */
 
-void UXInUInteractComponent::BeginPlay()
+void UXInUInteractorComponent::BeginPlay()
 {
 	Super::BeginPlay();
 }
 
-void UXInUInteractComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void UXInUInteractorComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	
@@ -175,20 +174,20 @@ void UXInUInteractComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /*
- * UXInUInteractComponent Interface
+ * UXInUInteractorComponent Interface
  */
 
-void UXInUInteractComponent::ResetInteractionState(AActor* Interactable, const FGameplayTag& Channel)
+void UXInUInteractorComponent::ResetInteractionState(AActor* Interactable, const FGameplayTag& Channel)
 {
 	InteractionInfoResetDelegate.Broadcast(Interactable, Channel);
 }
 
-void UXInUInteractComponent::UpdateInteractionState(const FXInUInteractionInfo& InteractionInfo)
+void UXInUInteractorComponent::UpdateInteractionState(const FXInUInteractionInfo& InteractionInfo)
 {
 	InteractionInfoDelegate.Broadcast(InteractionInfo);
 }
 
-void UXInUInteractComponent::RegisterInteractable(AActor* Interactable)
+void UXInUInteractorComponent::RegisterInteractable(AActor* Interactable)
 {
 	if (InteractablesInRage.RegisterInteractable(Interactable))
 	{
@@ -209,7 +208,7 @@ void UXInUInteractComponent::RegisterInteractable(AActor* Interactable)
 	}
 }
 
-void UXInUInteractComponent::UnRegisterInteractable(AActor* Interactable)
+void UXInUInteractorComponent::UnRegisterInteractable(AActor* Interactable)
 {
 	if (InteractablesInRage.UnRegisterInteractable(Interactable))
 	{
@@ -233,12 +232,12 @@ void UXInUInteractComponent::UnRegisterInteractable(AActor* Interactable)
 	}
 }
 
-void UXInUInteractComponent::UpdateInteractableAvailability(AActor* Interactable, bool bAvailable)
+void UXInUInteractorComponent::UpdateInteractableAvailability(AActor* Interactable, bool bAvailable)
 {
 	InteractablesInRage.RegisterInteractable(Interactable);
 }
 
-void UXInUInteractComponent::UpdateSelection()
+void UXInUInteractorComponent::UpdateSelection()
 {
 	FTransform AimTransform;
 	UXInUInteractionUtilLibrary::GetInteractionAimTransform(GetOwner(), AimTransform);
@@ -253,7 +252,7 @@ void UXInUInteractComponent::UpdateSelection()
 	}
 }
 
-void UXInUInteractComponent::UpdateSelectionForChannel(const FGameplayTag& Channel)
+void UXInUInteractorComponent::UpdateSelectionForChannel(const FGameplayTag& Channel)
 {
 	FTransform AimTransform;
 	UXInUInteractionUtilLibrary::GetInteractionAimTransform(GetOwner(), AimTransform);
@@ -263,7 +262,7 @@ void UXInUInteractComponent::UpdateSelectionForChannel(const FGameplayTag& Chann
 	UpdateSelectionInternal(Channel, AimLocation, AimDirection);
 }
 
-void UXInUInteractComponent::UpdateSelectionInternal(const FGameplayTag& Channel, const FVector& AimLocation, const FVector& AimDirection)
+void UXInUInteractorComponent::UpdateSelectionInternal(const FGameplayTag& Channel, const FVector& AimLocation, const FVector& AimDirection)
 {
 	// Find new preferred interactable
 	float MaxCrossProduct = -1.f;
@@ -294,7 +293,7 @@ void UXInUInteractComponent::UpdateSelectionInternal(const FGameplayTag& Channel
 	}
 }
 
-void UXInUInteractComponent::UpdateInteractableStatus(const FGameplayTag& Channel, AActor* Interactable, bool bSelected)
+void UXInUInteractorComponent::UpdateInteractableStatus(const FGameplayTag& Channel, AActor* Interactable, bool bSelected)
 {
 	UXInUInteractableComponent* InteractableComponent = UXInUInteractionUtilLibrary::GetInteractableComponent(Interactable);
 
@@ -333,7 +332,7 @@ void UXInUInteractComponent::UpdateInteractableStatus(const FGameplayTag& Channe
 /*--------------------------------------------------------------------------------------------------------------------*/
 /* Interaction Management */
 
-void UXInUInteractComponent::InputStartInteraction(const FGameplayTag& Channel, const FGameplayTag& Action)
+void UXInUInteractorComponent::InputStartInteraction(const FGameplayTag& Channel, const FGameplayTag& Action)
 {
 	AActor* Interactable = SelectedInteractables.GetSelected(Channel);
 	if (!StartInteraction(Interactable, Channel, Action)) return;
@@ -346,7 +345,7 @@ void UXInUInteractComponent::InputStartInteraction(const FGameplayTag& Channel, 
 	}
 }
 
-void UXInUInteractComponent::InputStopInteraction(const FGameplayTag& Channel)
+void UXInUInteractorComponent::InputStopInteraction(const FGameplayTag& Channel)
 {
 	EXInUInteractionTimerStatus TimerStatus = SelectedInteractables.GetInteractionTimerStatus(Channel);
 	if (TimerStatus <= EXInUInteractionTimerStatus::ETS_Inactive) return;
@@ -370,17 +369,17 @@ void UXInUInteractComponent::InputStopInteraction(const FGameplayTag& Channel)
 	}
 }
 
-void UXInUInteractComponent::ServerStartInteractionRPC_Implementation(AActor* Interactable, const FGameplayTag& Channel, const FGameplayTag& Action)
+void UXInUInteractorComponent::ServerStartInteractionRPC_Implementation(AActor* Interactable, const FGameplayTag& Channel, const FGameplayTag& Action)
 {
 	StartInteraction(Interactable, Channel, Action);
 }
 
-void UXInUInteractComponent::ServerStopInteractionRPC_Implementation(AActor* Interactable, const FGameplayTag& Channel)
+void UXInUInteractorComponent::ServerStopInteractionRPC_Implementation(AActor* Interactable, const FGameplayTag& Channel)
 {
 	StopInteraction(Interactable, Channel);
 }
 
-bool UXInUInteractComponent::StartInteraction(AActor* Interactable, const FGameplayTag& Channel, const FGameplayTag& Action)
+bool UXInUInteractorComponent::StartInteraction(AActor* Interactable, const FGameplayTag& Channel, const FGameplayTag& Action)
 {
 	UXInUInteractableComponent* InteractableComponent = UXInUInteractionUtilLibrary::GetInteractableComponent(Interactable);
 	if (!InteractableComponent) return false;
@@ -398,12 +397,12 @@ bool UXInUInteractComponent::StartInteraction(AActor* Interactable, const FGamep
 	return StartInteractionWithDuration(Interactable, Channel, Action, InteractionTime, bClientOnlyTimer);
 }
 
-void UXInUInteractComponent::StopInteraction(AActor* Interactable, const FGameplayTag& Channel)
+void UXInUInteractorComponent::StopInteraction(AActor* Interactable, const FGameplayTag& Channel)
 {
 	SelectedInteractables.StopInteractionTimer(Channel);
 }
 
-bool UXInUInteractComponent::StartInteractionWithDuration(AActor* Interactable, const FGameplayTag& Channel, const FGameplayTag& Action, float Duration, const bool bClientOnly)
+bool UXInUInteractorComponent::StartInteractionWithDuration(AActor* Interactable, const FGameplayTag& Channel, const FGameplayTag& Action, float Duration, const bool bClientOnly)
 {
 	FTimerDelegate TimerDelegate = FTimerDelegate::CreateUObject(this, &ThisClass::InteractionTimerEnded, Interactable, Channel, Action, bClientOnly);
 	if (!SelectedInteractables.StartInteractionTimer(Channel, TimerDelegate, Duration, bClientOnly)) return false;
@@ -423,7 +422,7 @@ bool UXInUInteractComponent::StartInteractionWithDuration(AActor* Interactable, 
 	return true;
 }
 
-void UXInUInteractComponent::InteractionTimerEnded(AActor* Interactable, const FGameplayTag Channel, const FGameplayTag Action, const bool bClientOnly)
+void UXInUInteractorComponent::InteractionTimerEnded(AActor* Interactable, const FGameplayTag Channel, const FGameplayTag Action, const bool bClientOnly)
 {
 	InteractFromTimer(Interactable, Channel, Action);
 
@@ -433,7 +432,7 @@ void UXInUInteractComponent::InteractionTimerEnded(AActor* Interactable, const F
 	}
 }
 
-void UXInUInteractComponent::InteractFromTimer(AActor* Interactable, const FGameplayTag& Channel, const FGameplayTag& Action)
+void UXInUInteractorComponent::InteractFromTimer(AActor* Interactable, const FGameplayTag& Channel, const FGameplayTag& Action)
 {
 	// since this function is delayed, we check that the interactable is still selected
 	if (!SelectedInteractables.IsSelected(Channel, Interactable)) return;
@@ -450,7 +449,7 @@ void UXInUInteractComponent::InteractFromTimer(AActor* Interactable, const FGame
 	}
 }
 
-void UXInUInteractComponent::ServerInteractFromTimerRPC_Implementation(AActor* Interactable, const FGameplayTag& Channel, const FGameplayTag& Action)
+void UXInUInteractorComponent::ServerInteractFromTimerRPC_Implementation(AActor* Interactable, const FGameplayTag& Channel, const FGameplayTag& Action)
 {
 	InteractFromTimer(Interactable, Channel, Action);
 }
@@ -461,7 +460,7 @@ void UXInUInteractComponent::ServerInteractFromTimerRPC_Implementation(AActor* I
 /*--------------------------------------------------------------------------------------------------------------------*/
 /* Interaction Logic */
 
-bool UXInUInteractComponent::CheckInteraction(AActor* Interactable, const FGameplayTag& Channel, const FGameplayTag& Action, FXInUInteractionState OutState)
+bool UXInUInteractorComponent::CheckInteraction(AActor* Interactable, const FGameplayTag& Channel, const FGameplayTag& Action, FXInUInteractionState OutState)
 {
 	bool bInteractionFound = false;
 
@@ -471,19 +470,19 @@ bool UXInUInteractComponent::CheckInteraction(AActor* Interactable, const FGamep
 		bInteractionFound = InteractableInteraction->CanInteract(GetOwner(), Channel, Action, OutState);
 	}
 
-	// Try interact side
+	// Try interactor side
 	if (!bInteractionFound)
 	{
-		if (IXInUInteractionInterface* InteractInteraction = Cast<IXInUInteractionInterface>(GetOwner()))
+		if (IXInUInteractionInterface* InteractorInteraction = Cast<IXInUInteractionInterface>(GetOwner()))
 		{
-			bInteractionFound = InteractInteraction->CanInteract(Interactable, Channel, Action, OutState);
+			bInteractionFound = InteractorInteraction->CanInteract(Interactable, Channel, Action, OutState);
 		}
 	}
 
 	return bInteractionFound;
 }
 
-void UXInUInteractComponent::Interact(AActor* Interactable, const FGameplayTag& Channel, const FGameplayTag& Action)
+void UXInUInteractorComponent::Interact(AActor* Interactable, const FGameplayTag& Channel, const FGameplayTag& Action)
 {
 	FXInUInteractionState InteractionState;
 	bool bInteractionFound = false;
@@ -498,15 +497,15 @@ void UXInUInteractComponent::Interact(AActor* Interactable, const FGameplayTag& 
 		}
 	}
 
-	// Try interact side
+	// Try interactor side
 	if (!bInteractionFound)
 	{
-		if (IXInUInteractionInterface* InteractInteraction = Cast<IXInUInteractionInterface>(GetOwner()))
+		if (IXInUInteractionInterface* InteractorInteraction = Cast<IXInUInteractionInterface>(GetOwner()))
 		{
-			bInteractionFound = InteractInteraction->CanInteract(Interactable, Channel, Action, InteractionState);
+			bInteractionFound = InteractorInteraction->CanInteract(Interactable, Channel, Action, InteractionState);
 			if (bInteractionFound)
 			{
-				InteractInteraction->TryInteract(Interactable, Channel, Action);
+				InteractorInteraction->TryInteract(Interactable, Channel, Action);
 			}
 		}
 	}

@@ -3,10 +3,10 @@
 
 #include "XInUInteractionUtilLibrary.h"
 
-#include "XInUInteractionInterface.h"
-#include "Interact/XInUInteractInterface.h"
+
 #include "Interactable/XInUInteractableComponent.h"
 #include "Interactable/XInUInteractableInterface.h"
+#include "Interactor/XInUInteractorInterface.h"
 
 UXInUInteractableComponent* UXInUInteractionUtilLibrary::GetInteractableComponent(AActor* InteractableActor)
 {
@@ -18,10 +18,10 @@ UXInUInteractableComponent* UXInUInteractionUtilLibrary::GetInteractableComponen
 
 bool UXInUInteractionUtilLibrary::GetInteractionAimTransform(AActor* InteractActor, FTransform& AimTransform)
 {
-	IXInUInteractInterface* InteractInterface = Cast<IXInUInteractInterface>(InteractActor);
-	if (!InteractInterface) return nullptr;
+	IXInUInteractorInterface* InteractorInterface = Cast<IXInUInteractorInterface>(InteractActor);
+	if (!InteractorInterface) return false;
 	
-	return InteractInterface->GetInteractionAimTransform(AimTransform);
+	return InteractorInterface->GetInteractionAimTransform(AimTransform);
 }
 
 float UXInUInteractionUtilLibrary::GetDefaultInteractionDuration(AActor* InteractableActor, const FGameplayTag& Action)

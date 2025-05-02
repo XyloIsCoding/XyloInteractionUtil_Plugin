@@ -5,11 +5,11 @@
 #include "CoreMinimal.h"
 #include "XInUInteractionTypes.h"
 #include "Components/ActorComponent.h"
-#include "XInUInteractComponent.generated.h"
+#include "XInUInteractorComponent.generated.h"
 
 struct FXInUInteractionInfo;
 struct FXInUInteractionState;
-class UXInUInteractComponent;
+class UXInUInteractorComponent;
 struct FXInUInteractionKey;
 struct FGameplayTag;
 
@@ -75,12 +75,12 @@ private:
  *
  */
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class XYLOINTERACTIONUTIL_API UXInUInteractComponent : public UActorComponent
+class XYLOINTERACTIONUTIL_API UXInUInteractorComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:	
-	UXInUInteractComponent(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
+	UXInUInteractorComponent(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -96,7 +96,7 @@ public:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	/*
-	 * UXInUInteractComponent Interface
+	 * UXInUInteractorComponent Interface
 	 */
 
 public:
