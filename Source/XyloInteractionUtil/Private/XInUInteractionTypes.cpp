@@ -9,7 +9,7 @@ void FXInUInteractionTimerData::Reset()
 	Duration = 0.f;
 }
 
-FXInUInteractionState* FXInUInteractionInfo::GetInteractionState(const FGameplayTag& Action)
+FXInUInteractionState* FXInUInteractionInfo::GetInteractionState(const FGameplayTag& Action) const
 {
 	return InteractionsState.Find(Action);
 }

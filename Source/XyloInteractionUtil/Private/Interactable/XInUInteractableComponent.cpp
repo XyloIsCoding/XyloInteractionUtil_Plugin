@@ -60,6 +60,11 @@ void UXInUInteractableComponent::UpdateInteractionState(const FXInUInteractionIn
 	InteractionInfoDelegate.Broadcast(InteractionInfo);
 }
 
+float UXInUInteractableComponent::GetInteractionProgress() const
+{
+	return (GetWorld()->GetTimeSeconds() - InteractionTimerData.StartTime) / InteractionTimerData.Duration;
+}
+
 void UXInUInteractableComponent::SetAvailable(bool bAvailable)
 {
 	bAvailableForInteraction = bAvailable;

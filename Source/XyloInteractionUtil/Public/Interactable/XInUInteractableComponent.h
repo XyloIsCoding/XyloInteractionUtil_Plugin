@@ -45,9 +45,12 @@ public:
 	void UpdateInteractionState(const FXInUInteractionInfo& InteractionInfo);
 	FXInUInteractionInfoResetSignature InteractionResetDelegate;
 	FXInUInteractionInfoSignature InteractionInfoDelegate;
+	UFUNCTION(BlueprintCallable, Category = "Interaction")
+	float GetInteractionProgress() const;
 
 public:
 	FXInUAvailabilityChangedSignature AvailabilityChangedDelegate;
+	UFUNCTION(BlueprintCallable, Category = "Interaction")
 	void SetAvailable(bool bAvailable);
 	bool IsAvailable() const { return bAvailableForInteraction; }
 protected:

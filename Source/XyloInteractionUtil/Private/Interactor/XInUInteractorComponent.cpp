@@ -127,6 +127,20 @@ bool FXInUSelectedInteractable::StopInteractionTimer(const FGameplayTag& Channel
 	return true;
 }
 
+float FXInUSelectedInteractable::GetInteractionProgress(const FGameplayTag& Channel) const
+{
+	const FSelected* Selection = Selected.Find(Channel);
+	if (!Selection) return 0.f;
+	AActor* Interactable = Selection->Interactable.Get();
+	if (!Interactable) return 0.f;
+
+	float TimeElapsed = Interactable->GetWorld()->GetTimerManager().GetTimerElapsed(Selection->InteractionTimerHandle);
+	if (TimeElapsed < 0) return 0.f;
+	
+	float Duration = Interactable->GetWorld()->GetTimerManager().GetTimerRate(Selection->InteractionTimerHandle);
+	return TimeElapsed / Duration;
+}
+
 EXInUInteractionTimerStatus FXInUSelectedInteractable::GetInteractionTimerStatus(const FGameplayTag& Channel)
 {
 	FSelected* Selection = Selected.Find(Channel);
@@ -185,6 +199,11 @@ void UXInUInteractorComponent::ResetInteractionState(AActor* Interactable, const
 void UXInUInteractorComponent::UpdateInteractionState(const FXInUInteractionInfo& InteractionInfo)
 {
 	InteractionInfoDelegate.Broadcast(InteractionInfo);
+}
+
+float UXInUInteractorComponent::GetInteractionProgress(const FGameplayTag& Channel) const
+{
+	return SelectedInteractables.GetInteractionProgress(Channel);
 }
 
 void UXInUInteractorComponent::RegisterInteractable(AActor* Interactable)

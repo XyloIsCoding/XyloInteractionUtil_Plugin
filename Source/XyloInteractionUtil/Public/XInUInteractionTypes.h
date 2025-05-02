@@ -48,7 +48,7 @@ private:
 	TMap<FGameplayTag, FXInUInteractionState> InteractionsState;
 
 public:
-	FXInUInteractionState* GetInteractionState(const FGameplayTag& Action);
+	FXInUInteractionState* GetInteractionState(const FGameplayTag& Action) const;
 	void AddInteractionState(const FGameplayTag& Action, const FXInUInteractionState& State);
 };
 

@@ -62,6 +62,7 @@ public:
 	void InvalidateSelection(const FGameplayTag& Channel, AActor* Interactable);
 	bool StartInteractionTimer(const FGameplayTag& Channel, const FTimerDelegate& TimerDelegate, float Duration, bool bClientOnly);
 	bool StopInteractionTimer(const FGameplayTag& Channel);
+	float GetInteractionProgress(const FGameplayTag& Channel) const;
 	EXInUInteractionTimerStatus GetInteractionTimerStatus(const FGameplayTag& Channel);
 private:
 	TMap<FGameplayTag, FSelected> Selected;
@@ -104,6 +105,8 @@ public:
 	void UpdateInteractionState(const FXInUInteractionInfo& InteractionInfo);
 	FXInUInteractionInfoResetSignature InteractionInfoResetDelegate;
 	FXInUInteractionInfoSignature InteractionInfoDelegate;
+	UFUNCTION(BlueprintCallable, Category = "Interaction")
+	float GetInteractionProgress(const FGameplayTag& Channel) const;
 
 public:
 	void RegisterInteractable(AActor* Interactable);

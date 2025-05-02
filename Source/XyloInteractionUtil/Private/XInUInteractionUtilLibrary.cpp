@@ -32,3 +32,7 @@ float UXInUInteractionUtilLibrary::GetDefaultInteractionDuration(AActor* Interac
 	return InteractableComponent->GetInteractionDuration(Action);
 }
 
+FXInUInteractionState UXInUInteractionUtilLibrary::GetInteractionStateFromInfo(const FXInUInteractionInfo& InteractionInfo, const FGameplayTag& Action)
+{
+	return *InteractionInfo.GetInteractionState(Action);
+}
