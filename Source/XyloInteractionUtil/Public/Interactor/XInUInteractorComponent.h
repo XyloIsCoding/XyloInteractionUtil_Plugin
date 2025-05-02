@@ -52,6 +52,7 @@ struct FXInUSelectedInteractable
 	{
 		TWeakObjectPtr<AActor> Interactable;
 		FTimerHandle InteractionTimerHandle;
+		// Should only be trusted if InteractionTimerHandle is active
 		bool bClientOnlyTimer;
 	};
 	
@@ -73,7 +74,8 @@ private:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
- *
+ * Manages interactions with UXInUInteractableComponent.
+ * <p> The owner of this component must implement IXInUInteractorInterface </p>
  */
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class XYLOINTERACTIONUTIL_API UXInUInteractorComponent : public UActorComponent
@@ -91,9 +93,14 @@ public:
 	
 protected:
 	virtual void BeginPlay() override;
+	virtual void OnRegister() override;
 public:	
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+protected:
+	bool IsOwnerLocallyControlled() const;
+	bool HasAuthority() const;
+	
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	/*
@@ -109,28 +116,39 @@ public:
 	float GetInteractionProgress(const FGameplayTag& Channel) const;
 
 public:
+	/** Register an interactable actor to this component
+	 * @remark NOT replicated. Has to be called from both client and server */
+	UFUNCTION(BlueprintCallable, Category = "Interaction")
 	void RegisterInteractable(AActor* Interactable);
+	/** Unregister an interactable actor to this component 
+	 * @remark NOT replicated. Has to be called from both client and server */
+	UFUNCTION(BlueprintCallable, Category = "Interaction")
 	void UnRegisterInteractable(AActor* Interactable);
+protected:
 	void UpdateInteractableAvailability(AActor* Interactable, bool bAvailable);
 private:
 	FXInUInteractableList InteractablesInRage;
 
 protected:
-	void UpdateSelection();
-	void UpdateSelectionForChannel(const FGameplayTag& Channel);
-	void UpdateSelectionInternal(const FGameplayTag& Channel, const FVector& AimLocation, const FVector& AimDirection);
-	virtual void UpdateInteractableStatus(const FGameplayTag& Channel, AActor* Interactable, bool bSelected);
+	void Local_UpdateSelection();
+	void Local_UpdateSelectionForChannel(const FGameplayTag& Channel);
+	void Local_UpdateSelectionInternal(const FGameplayTag& Channel, const FVector& AimLocation, const FVector& AimDirection);
+	virtual void Local_UpdateInteractableStatus(const FGameplayTag& Channel, AActor* Interactable, bool bSelected);
 private:
+	/** @remark Only filled if locally controlled. On non locally controlled authority, values are only updated
+	 *			when starting an interaction */
 	FXInUSelectedInteractable SelectedInteractables;
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 	/* Interaction Management */
 
 public:
-	/** Function to call to start an interaction. should be called from locally controlled actors.
-	 * (Calls ExecuteInteraction, and if not authority calls ServerInteractRPC) */
+	/** Start an interaction.
+	 * @remark should be called from locally controlled actors */
 	UFUNCTION(BlueprintCallable, Category = "Interaction")
 	virtual void InputStartInteraction(const FGameplayTag Channel, const FGameplayTag Action);
+	/** Stop an interaction. should be called from locally controlled actors.
+	 * @remark should be called from locally controlled actors */
 	UFUNCTION(BlueprintCallable, Category = "Interaction")
 	virtual void InputStopInteraction(const FGameplayTag Channel);
 protected:
@@ -142,11 +160,11 @@ protected:
 	virtual bool StartInteraction(AActor* Interactable, const FGameplayTag& Channel, const FGameplayTag& Action);
 	virtual void StopInteraction(AActor* Interactable, const FGameplayTag& Channel);
 
-	virtual bool StartInteractionWithDuration(AActor* Interactable, const FGameplayTag& Channel, const FGameplayTag& Action, float Duration, const bool bClientOnly);
+	virtual bool DelayedInteractionStart(AActor* Interactable, const FGameplayTag& Channel, const FGameplayTag& Action, float Duration, const bool bClientOnly);
 	virtual void InteractionTimerEnded(AActor* Interactable, const FGameplayTag Channel, const FGameplayTag Action, const bool bClientOnly);
-	virtual void InteractFromTimer(AActor* Interactable, const FGameplayTag& Channel, const FGameplayTag& Action);
 	UFUNCTION(Server, Reliable)
 	virtual void ServerInteractFromTimerRPC(AActor* Interactable, const FGameplayTag& Channel, const FGameplayTag& Action);
+	virtual void InteractFromTimer(AActor* Interactable, const FGameplayTag& Channel, const FGameplayTag& Action);
 
 	//~ Interaction Management
 /*--------------------------------------------------------------------------------------------------------------------*/

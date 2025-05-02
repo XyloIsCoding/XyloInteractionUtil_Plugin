@@ -17,14 +17,14 @@ class UXInUInteractionInterface : public UInterface
 };
 
 /**
- * 
+ * Implement this interface on the owner of a UXInUInteractorComponent or UXInUInteractableComponent
  */
 class XYLOINTERACTIONUTIL_API IXInUInteractionInterface
 {
 	GENERATED_BODY()
 
 public:
-	/** @return true if OutState is filled */
+	/** @return true if this actor has the code to handle the requested interaction (OutState is filled) */
 	virtual bool CanInteract(AActor* OtherActor, const FGameplayTag& Channel, const FGameplayTag& Action, FXInUInteractionState& OutState) = 0;
 	/** @return true if interacted */
 	virtual bool TryInteract(AActor* OtherActor, const FGameplayTag& Channel, const FGameplayTag& Action) = 0;

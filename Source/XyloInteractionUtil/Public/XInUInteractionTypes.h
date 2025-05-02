@@ -21,11 +21,15 @@ struct FXInUInteractionTimerData
 	void Reset();
 };
 
+/** Result of IXInUInteractionInterface::CanInteract
+ * <p> bCanInteract needs to be set to true to allow an interaction to happen
+ * <p> InteractionStatus is optional, and mostly used to add extra informations to FXInUInteractionInfo */
 USTRUCT(BlueprintType)
 struct FXInUInteractionState
 {
 	GENERATED_BODY()
 
+	/** Decides if the interaction can happen or not */
 	UPROPERTY(BlueprintReadWrite)
 	bool bCanInteract = false;
 	UPROPERTY(BlueprintReadWrite)
@@ -61,6 +65,6 @@ DECLARE_MULTICAST_DELEGATE_TwoParams(FXInUInteractionInfoResetSignature, AActor*
 UENUM(BlueprintType)
 enum class EXInUInteractableUnselectedBehaviour : uint8
 {
-	EUB_ComputeInteractions UMETA(DisplayName = "Compute Interactions"),
-	EUB_SkipInteractions UMETA(DisplayName = "Skip Interactions"),
+	EUB_SkipInteractions UMETA(DisplayName = "Skip Interactions") /* Do not fill FXInUInteractionState in FXInUInteractionInfo if not selected */,
+	EUB_ComputeInteractions UMETA(DisplayName = "Compute Interactions") /* Fill FXInUInteractionState in FXInUInteractionInfo even if not selected */,
 };

@@ -5,6 +5,7 @@
 
 #include "GameplayTagContainer.h"
 #include "Interactable/XInUInteractableData.h"
+#include "Interactable/XInUInteractableInterface.h"
 #include "Net/UnrealNetwork.h"
 
 
@@ -36,11 +37,16 @@ void UXInUInteractableComponent::OnRegister()
 {
 	Super::OnRegister();
 
-	if (!InteractableData)
+	if (GetOwner())
 	{
-		FString OwnerName = FString();
-		if (GetOwner()) GetOwner()->GetName(OwnerName);
-		UE_LOG(LogTemp, Error, TEXT("[%s] UXInUInteractableComponent needs a valid InteractableData to be set"), *OwnerName)
+		if (!GetOwner()->Implements<UXInUInteractableInterface>())
+		{
+			UE_LOG(LogTemp, Error, TEXT("[%s] UXInUInteractableComponent's owner must implement IXInUInteractableInterface"), *GetOwner()->GetName())
+		}
+		if (!InteractableData)
+		{
+			UE_LOG(LogTemp, Error, TEXT("[%s] UXInUInteractableComponent needs a valid InteractableData to be set"), *GetOwner()->GetName())
+		}
 	}
 }
 

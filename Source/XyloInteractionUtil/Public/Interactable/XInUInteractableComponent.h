@@ -13,7 +13,8 @@ struct FGameplayTag;
 DECLARE_MULTICAST_DELEGATE_TwoParams(FXInUAvailabilityChangedSignature, AActor*, bool)
 
 /**
- *
+ * Makes the owner able to be interacted with, by UXInUInteractorComponent.
+ * <p> The owner of this component must implement IXInUInteractableInterface </p>
  */
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class XYLOINTERACTIONUTIL_API UXInUInteractableComponent : public UActorComponent
@@ -58,7 +59,7 @@ protected:
 	void OnRep_AvailableForInteraction();
 	void AvailabilitySet();
 private:
-	UPROPERTY(ReplicatedUsing = OnRep_AvailableForInteraction)
+	UPROPERTY(EditAnywhere, ReplicatedUsing = OnRep_AvailableForInteraction, Category = "Interaction")
 	bool bAvailableForInteraction = true;
 
 public:
@@ -71,12 +72,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Interaction")
 	EXInUInteractableUnselectedBehaviour GetUnselectedBehaviour() const;
 private:
-	UPROPERTY(EditAnywhere)
+	/** Defines the properties of this interactable actor */
+	UPROPERTY(EditAnywhere, Category = "Interaction")
 	TObjectPtr<UXInUInteractableData> InteractableData;
 
 public:
 	void UpdateInteractionTimerData(const FXInUInteractionTimerData& NewTimerData);
 	void ResetInteractionTimerData();
 private:
+	/** @remark Only filled locally for the interacting client instance */
 	FXInUInteractionTimerData InteractionTimerData;
 };
