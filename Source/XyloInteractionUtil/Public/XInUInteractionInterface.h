@@ -24,7 +24,7 @@ class XYLOINTERACTIONUTIL_API IXInUInteractionInterface
 	GENERATED_BODY()
 
 public:
-	virtual bool CanInteract(AActor* OtherActor, const FGameplayTag& Channel, const FGameplayTag& Action, FXInUInteractionState OutState) = 0;
+	virtual bool CanInteract(AActor* OtherActor, const FGameplayTag& Channel, const FGameplayTag& Action, FXInUInteractionState& OutState) = 0;
 	virtual bool TryInteract(AActor* OtherActor, const FGameplayTag& Channel, const FGameplayTag& Action) = 0;
 	
 };
