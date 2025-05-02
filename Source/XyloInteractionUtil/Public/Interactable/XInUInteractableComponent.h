@@ -63,12 +63,15 @@ private:
 
 public:
 	bool GetInteractionChannel(FGameplayTag& OutChannel) const;
+	UFUNCTION(BlueprintCallable, Category = "Interaction")
 	float GetInteractionDuration(const FGameplayTag& Action) const;
 	float IsInteractionDurationClientSideOnly(const FGameplayTag& Action) const;
+	UFUNCTION(BlueprintCallable, Category = "Interaction")
 	bool GetSupportedActions(FGameplayTagContainer& Actions) const;
+	UFUNCTION(BlueprintCallable, Category = "Interaction")
 	EXInUInteractableUnselectedBehaviour GetUnselectedBehaviour() const;
 private:
-	UPROPERTY()
+	UPROPERTY(EditAnywhere)
 	TObjectPtr<UXInUInteractableData> InteractableData;
 
 public:

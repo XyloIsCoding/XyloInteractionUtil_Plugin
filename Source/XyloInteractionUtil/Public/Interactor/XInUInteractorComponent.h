@@ -130,9 +130,9 @@ public:
 	/** Function to call to start an interaction. should be called from locally controlled actors.
 	 * (Calls ExecuteInteraction, and if not authority calls ServerInteractRPC) */
 	UFUNCTION(BlueprintCallable, Category = "Interaction")
-	virtual void InputStartInteraction(const FGameplayTag& Channel, const FGameplayTag& Action);
+	virtual void InputStartInteraction(const FGameplayTag Channel, const FGameplayTag Action);
 	UFUNCTION(BlueprintCallable, Category = "Interaction")
-	virtual void InputStopInteraction(const FGameplayTag& Channel);
+	virtual void InputStopInteraction(const FGameplayTag Channel);
 protected:
 	UFUNCTION(Server, Reliable)
 	virtual void ServerStartInteractionRPC(AActor* Interactable, const FGameplayTag& Channel, const FGameplayTag& Action);

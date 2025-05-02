@@ -315,7 +315,12 @@ void UXInUInteractorComponent::UpdateSelectionInternal(const FGameplayTag& Chann
 void UXInUInteractorComponent::UpdateInteractableStatus(const FGameplayTag& Channel, AActor* Interactable, bool bSelected)
 {
 	UXInUInteractableComponent* InteractableComponent = UXInUInteractionUtilLibrary::GetInteractableComponent(Interactable);
-
+	if (!InteractableComponent)
+	{
+		ResetInteractionState(Interactable, Channel);
+		return;
+	}
+	
 	// if not in range anymore, then reset and return
 	if (!InteractablesInRage.IsAvailable(Channel, Interactable))
 	{
@@ -351,7 +356,7 @@ void UXInUInteractorComponent::UpdateInteractableStatus(const FGameplayTag& Chan
 /*--------------------------------------------------------------------------------------------------------------------*/
 /* Interaction Management */
 
-void UXInUInteractorComponent::InputStartInteraction(const FGameplayTag& Channel, const FGameplayTag& Action)
+void UXInUInteractorComponent::InputStartInteraction(const FGameplayTag Channel, const FGameplayTag Action)
 {
 	AActor* Interactable = SelectedInteractables.GetSelected(Channel);
 	if (!StartInteraction(Interactable, Channel, Action)) return;
@@ -364,7 +369,7 @@ void UXInUInteractorComponent::InputStartInteraction(const FGameplayTag& Channel
 	}
 }
 
-void UXInUInteractorComponent::InputStopInteraction(const FGameplayTag& Channel)
+void UXInUInteractorComponent::InputStopInteraction(const FGameplayTag Channel)
 {
 	EXInUInteractionTimerStatus TimerStatus = SelectedInteractables.GetInteractionTimerStatus(Channel);
 	if (TimerStatus <= EXInUInteractionTimerStatus::ETS_Inactive) return;
