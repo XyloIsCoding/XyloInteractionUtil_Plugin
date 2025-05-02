@@ -16,6 +16,14 @@ UXInUInteractableComponent* UXInUInteractionUtilLibrary::GetInteractableComponen
 	return InteractableInterface->GetInteractableComponent();
 }
 
+UXInUInteractorComponent* UXInUInteractionUtilLibrary::GetInteractorComponent(AActor* InteractorActor)
+{
+	IXInUInteractorInterface* InteractorInterface = Cast<IXInUInteractorInterface>(InteractorActor);
+	if (!InteractorInterface) return nullptr;
+	
+	return InteractorInterface->GetInteractorComponent();
+}
+
 bool UXInUInteractionUtilLibrary::GetInteractionAimTransform(AActor* InteractActor, FTransform& AimTransform)
 {
 	IXInUInteractorInterface* InteractorInterface = Cast<IXInUInteractorInterface>(InteractActor);
