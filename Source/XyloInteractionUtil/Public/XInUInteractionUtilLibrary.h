@@ -30,6 +30,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Interaction")
 	static float GetDefaultInteractionDuration(AActor* InteractableActor, const FGameplayTag& Action);
 
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Interaction")
-	static FXInUInteractionState GetInteractionStateFromInfo(const FXInUInteractionInfo& InteractionInfo, const FGameplayTag& Action);
+	UFUNCTION(BlueprintCallable, Category = "Interaction")
+	static bool GetInteractionStateFromInfo(const FXInUInteractionInfo& InteractionInfo, const FGameplayTag Action, FXInUInteractionState& OutInteractionState);
 };

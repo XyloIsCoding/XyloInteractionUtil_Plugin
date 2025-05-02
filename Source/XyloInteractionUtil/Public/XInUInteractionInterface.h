@@ -24,7 +24,9 @@ class XYLOINTERACTIONUTIL_API IXInUInteractionInterface
 	GENERATED_BODY()
 
 public:
+	/** @return true if OutState is filled */
 	virtual bool CanInteract(AActor* OtherActor, const FGameplayTag& Channel, const FGameplayTag& Action, FXInUInteractionState& OutState) = 0;
+	/** @return true if interacted */
 	virtual bool TryInteract(AActor* OtherActor, const FGameplayTag& Channel, const FGameplayTag& Action) = 0;
 	
 };

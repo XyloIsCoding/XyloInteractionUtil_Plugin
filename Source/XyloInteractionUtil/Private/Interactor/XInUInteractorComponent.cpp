@@ -344,8 +344,10 @@ void UXInUInteractorComponent::UpdateInteractableStatus(const FGameplayTag& Chan
 		for (FGameplayTag Action : Actions)
 		{
 			FXInUInteractionState InteractionState;
-			CheckInteraction(Interactable, Channel, Action, InteractionState);
-			InteractionInfo.AddInteractionState(Action, InteractionState);
+			if (CheckInteraction(Interactable, Channel, Action, InteractionState))
+			{
+				InteractionInfo.AddInteractionState(Action, InteractionState);
+			}
 		}
 	}
 
@@ -484,7 +486,7 @@ void UXInUInteractorComponent::ServerInteractFromTimerRPC_Implementation(AActor*
 /*--------------------------------------------------------------------------------------------------------------------*/
 /* Interaction Logic */
 
-bool UXInUInteractorComponent::CheckInteraction(AActor* Interactable, const FGameplayTag& Channel, const FGameplayTag& Action, FXInUInteractionState OutState)
+bool UXInUInteractorComponent::CheckInteraction(AActor* Interactable, const FGameplayTag& Channel, const FGameplayTag& Action, FXInUInteractionState& OutState)
 {
 	bool bInteractionFound = false;
 
@@ -515,7 +517,7 @@ void UXInUInteractorComponent::Interact(AActor* Interactable, const FGameplayTag
 	if (IXInUInteractionInterface* InteractableInteraction = Cast<IXInUInteractionInterface>(Interactable))
 	{
 		bInteractionFound = InteractableInteraction->CanInteract(GetOwner(), Channel, Action, InteractionState);
-		if (bInteractionFound)
+		if (bInteractionFound && InteractionState.bCanInteract)
 		{
 			InteractableInteraction->TryInteract(GetOwner(), Channel, Action);
 		}
@@ -527,7 +529,7 @@ void UXInUInteractorComponent::Interact(AActor* Interactable, const FGameplayTag
 		if (IXInUInteractionInterface* InteractorInteraction = Cast<IXInUInteractionInterface>(GetOwner()))
 		{
 			bInteractionFound = InteractorInteraction->CanInteract(Interactable, Channel, Action, InteractionState);
-			if (bInteractionFound)
+			if (bInteractionFound && InteractionState.bCanInteract)
 			{
 				InteractorInteraction->TryInteract(Interactable, Channel, Action);
 			}

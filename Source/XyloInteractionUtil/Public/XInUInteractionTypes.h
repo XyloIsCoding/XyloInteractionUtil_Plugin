@@ -25,7 +25,9 @@ USTRUCT(BlueprintType)
 struct FXInUInteractionState
 {
 	GENERATED_BODY()
-	
+
+	UPROPERTY(BlueprintReadWrite)
+	bool bCanInteract = false;
 	UPROPERTY(BlueprintReadWrite)
 	FGameplayTag InteractionStatus;
 };
@@ -53,7 +55,7 @@ public:
 	void AddInteractionState(const FGameplayTag& Action, const FXInUInteractionState& State);
 };
 
-DECLARE_MULTICAST_DELEGATE_OneParam(FXInUInteractionInfoSignature, FXInUInteractionInfo)
+DECLARE_MULTICAST_DELEGATE_OneParam(FXInUInteractionInfoSignature, const FXInUInteractionInfo&)
 DECLARE_MULTICAST_DELEGATE_TwoParams(FXInUInteractionInfoResetSignature, AActor*, FGameplayTag)
 
 UENUM(BlueprintType)

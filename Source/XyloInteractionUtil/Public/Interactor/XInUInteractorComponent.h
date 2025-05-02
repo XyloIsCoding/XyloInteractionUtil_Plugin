@@ -155,7 +155,8 @@ protected:
 	/* Interaction Logic */
 
 protected:
-	virtual bool CheckInteraction(AActor* Interactable, const FGameplayTag& Channel, const FGameplayTag& Action, FXInUInteractionState OutState);
+	/** @return true if OutState is filled */
+	virtual bool CheckInteraction(AActor* Interactable, const FGameplayTag& Channel, const FGameplayTag& Action, FXInUInteractionState& OutState);
 	virtual void Interact(AActor* Interactable, const FGameplayTag& Channel, const FGameplayTag& Action);
 
 	//~ Interaction Logic

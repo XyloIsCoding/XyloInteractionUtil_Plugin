@@ -40,7 +40,12 @@ float UXInUInteractionUtilLibrary::GetDefaultInteractionDuration(AActor* Interac
 	return InteractableComponent->GetInteractionDuration(Action);
 }
 
-FXInUInteractionState UXInUInteractionUtilLibrary::GetInteractionStateFromInfo(const FXInUInteractionInfo& InteractionInfo, const FGameplayTag& Action)
+bool UXInUInteractionUtilLibrary::GetInteractionStateFromInfo(const FXInUInteractionInfo& InteractionInfo, const FGameplayTag Action, FXInUInteractionState& OutInteractionState)
 {
-	return *InteractionInfo.GetInteractionStateConst(Action);
+	const FXInUInteractionState* InteractionStatePtr = InteractionInfo.GetInteractionStateConst(Action);
+	if (InteractionStatePtr)
+	{
+		OutInteractionState = *InteractionStatePtr;
+	}
+	return InteractionStatePtr != nullptr;
 }
