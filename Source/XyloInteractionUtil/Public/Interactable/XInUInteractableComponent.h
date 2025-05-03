@@ -66,7 +66,7 @@ public:
 	bool GetInteractionChannel(FGameplayTag& OutChannel) const;
 	UFUNCTION(BlueprintCallable, Category = "Interaction")
 	float GetInteractionDuration(const FGameplayTag& Action) const;
-	float IsInteractionDurationClientSideOnly(const FGameplayTag& Action) const;
+	bool IsInteractionDurationClientSideOnly(const FGameplayTag& Action) const;
 	UFUNCTION(BlueprintCallable, Category = "Interaction")
 	bool GetSupportedActions(FGameplayTagContainer& Actions) const;
 	UFUNCTION(BlueprintCallable, Category = "Interaction")

@@ -103,7 +103,7 @@ float UXInUInteractableComponent::GetInteractionDuration(const FGameplayTag& Act
 	return InteractionSettings->InteractionDuration;
 }
 
-float UXInUInteractableComponent::IsInteractionDurationClientSideOnly(const FGameplayTag& Action) const
+bool UXInUInteractableComponent::IsInteractionDurationClientSideOnly(const FGameplayTag& Action) const
 {
 	if (!InteractableData) return false;
 	FXInUInteractionSettings* InteractionSettings = InteractableData->GetInteractionSettings(Action);
