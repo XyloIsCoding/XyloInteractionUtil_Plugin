@@ -60,7 +60,7 @@ public:
 	AActor* GetSelected(const FGameplayTag& Channel);
 	bool IsSelected(const FGameplayTag& Channel, AActor* Interactable);
 	void UpdateSelection(const FGameplayTag& Channel, AActor* Interactable);
-	void InvalidateSelection(const FGameplayTag& Channel, AActor* Interactable);
+	void InvalidateSelection(const FGameplayTag& Channel);
 	bool StartInteractionTimer(const FGameplayTag& Channel, const FTimerDelegate& TimerDelegate, float Duration, bool bClientOnly);
 	bool StopInteractionTimer(const FGameplayTag& Channel);
 	float GetInteractionProgress(const FGameplayTag& Channel) const;

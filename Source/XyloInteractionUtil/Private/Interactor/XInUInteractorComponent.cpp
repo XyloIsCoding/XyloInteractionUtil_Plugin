@@ -96,12 +96,9 @@ void FXInUSelectedInteractable::UpdateSelection(const FGameplayTag& Channel, AAc
 	Selection.Interactable = Interactable;
 }
 
-void FXInUSelectedInteractable::InvalidateSelection(const FGameplayTag& Channel, AActor* Interactable)
+void FXInUSelectedInteractable::InvalidateSelection(const FGameplayTag& Channel)
 {
-	if (IsSelected(Channel, Interactable))
-	{
-		UpdateSelection(Channel, nullptr);
-	}
+	UpdateSelection(Channel, nullptr);
 }
 
 bool FXInUSelectedInteractable::StartInteractionTimer(const FGameplayTag& Channel, const FTimerDelegate& TimerDelegate, float Duration, bool bClientOnly)
@@ -272,6 +269,17 @@ void UXInUInteractorComponent::UnRegisterInteractable(AActor* Interactable)
 				Local_UpdateInteractableStatus(Channel, Interactable, false);
 			}
 		}
+		else if (HasAuthority())
+		{
+			// For non locally controlled authority, SelectedInteractables is only updated an interaction request is
+			// received. So we need to make sure to unselect actors when they are unregistered
+			if (SelectedInteractables.IsSelected(Channel, Interactable))
+			{
+				// we are doing the same thing that happens in Local_UpdateSelectionInternal if new selection is nullptr
+				InputStopInteraction(Channel);
+				SelectedInteractables.InvalidateSelection(Channel);
+			}
+		}
 	}
 }
 
@@ -421,8 +429,10 @@ void UXInUInteractorComponent::InputStopInteraction(const FGameplayTag Channel)
 
 void UXInUInteractorComponent::ServerStartInteractionRPC_Implementation(AActor* Interactable, const FGameplayTag& Channel, const FGameplayTag& Action)
 {
+	// Verify that Interactable is really registered and available 
 	if (InteractablesInRage.IsAvailable(Channel, Interactable))
 	{
+		// Update selection on server, since it is not updated automatically
 		SelectedInteractables.UpdateSelection(Channel, Interactable);
 		StartInteraction(Interactable, Channel, Action);
 	}
@@ -490,7 +500,7 @@ void UXInUInteractorComponent::InteractionTimerEnded(AActor* Interactable, const
 {
 	InteractFromTimer(Interactable, Channel, Action);
 
-	// If client-only timer just ended, call interaction rpc
+	// If client-only timer just ended, ask server to interact (since we did not do that in InputStartInteraction)
 	if (bClientOnly && !HasAuthority())
 	{
 		ServerInteractFromTimerRPC(Interactable, Channel, Action);
@@ -499,8 +509,10 @@ void UXInUInteractorComponent::InteractionTimerEnded(AActor* Interactable, const
 
 void UXInUInteractorComponent::ServerInteractFromTimerRPC_Implementation(AActor* Interactable, const FGameplayTag& Channel, const FGameplayTag& Action)
 {
+	// Verify that Interactable is really registered and available 
 	if (InteractablesInRage.IsAvailable(Channel, Interactable))
 	{
+		// Update selection on server, since it is not updated automatically
 		SelectedInteractables.UpdateSelection(Channel, Interactable);
 		InteractFromTimer(Interactable, Channel, Action);
 	}
@@ -509,6 +521,7 @@ void UXInUInteractorComponent::ServerInteractFromTimerRPC_Implementation(AActor*
 void UXInUInteractorComponent::InteractFromTimer(AActor* Interactable, const FGameplayTag& Channel, const FGameplayTag& Action)
 {
 	// since this function is delayed, we check that the interactable is still selected
+	// note: checking IsSelected is enough on server too, since actors get unselected if they are unregistered
 	if (!SelectedInteractables.IsSelected(Channel, Interactable)) return;
 	
 	UXInUInteractableComponent* InteractableComponent = UXInUInteractionUtilLibrary::GetInteractableComponent(Interactable);
